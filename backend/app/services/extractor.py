@@ -47,6 +47,13 @@ class MediaExtractor:
             'extract_flat': False,
             'socket_timeout': 20,
             'ignoreerrors': False,
+            'remote_components': {'ejs:github'},
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['tv', 'android', 'web'],
+                    'player_skip': ['webpage', 'configs']
+                }
+            },
             'http_headers': {
                 'User-Agent': (
                     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -61,6 +68,24 @@ class MediaExtractor:
             opts['ffmpeg_location'] = loc
         if self.node_path:
             opts['js_runtimes'] = {'node': {'path': self.node_path}}
+        else:
+            opts['js_runtimes'] = {'node': {}}
+
+        # Check for cookies file to bypass bot challenges
+        cookie_path = os.getenv("YTDLP_COOKIES_PATH") or os.getenv("COOKIE_FILE")
+        if not cookie_path:
+            candidates = [
+                os.path.abspath("cookies.txt"),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "cookies.txt")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "cookies.txt")),
+            ]
+            for cand in candidates:
+                if os.path.isfile(cand):
+                    cookie_path = cand
+                    break
+        if cookie_path and os.path.isfile(cookie_path):
+            opts['cookiefile'] = cookie_path
+
         return opts
 
     def _probe_direct_file(self, url: str) -> Optional[Dict[str, Any]]:
