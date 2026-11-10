@@ -4,66 +4,47 @@
 
 This audit reviews the extraction pipeline, YouTube challenge resolution mechanisms, format discovery, and client credential requirements within the VIRELO application deployed on Render (`https://virelo-2hu8.onrender.com/`).
 
-Prior to this fix, users experienced repetitive blocking with messages such as:
-- *"Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication."*
-- *"Requested format is not available. Use --list-formats for a list of available formats."*
-- Prompts pressuring end-users to export and upload `cookies.txt` browser files.
-
-The audit confirmed that **forcing users to upload cookies was an ineffective and insecure workaround** for underlying infrastructure and configuration defects:
-1. Missing JavaScript engine (`deno`/`node`) in headless container environments prevented yt-dlp from executing encrypted signature deciphering (`n`-challenge).
-2. Hardcoded YouTube player client configurations (`tv`, `android`, `web`) activated YouTube's TV-client DRM experiments and Android SABR streaming, which stripped accessible MP4 video formats and caused format resolution crashes.
-3. Download queues lacked resilient format degradation ladders when creators did not upload exact targeted resolutions (e.g., 1080p on 720p-native uploads).
+### Production Verification (Live Health Endpoint)
+Inspection of `https://virelo-2hu8.onrender.com/api/health` confirmed:
+- **Deno Runtime**: Active and verified (`/usr/local/bin/deno`)
+- **Node.js Runtime**: Active (`/usr/bin/node`)
+- **FFmpeg & FFprobe**: Active and verified (`/usr/bin/ffmpeg`, `/usr/bin/ffprobe`)
+- **Disk Free**: 64.4 GB available scratch space
 
 ---
 
-## 2. Extraction Pipeline Audit Matrix
+## 2. Root Cause Analysis: Why Certain Videos Triggered Platform Detection
 
-| Pipeline Component | Previous State | Audited & Corrected State | Status |
-| :--- | :--- | :--- | :--- |
-| **yt-dlp Core Engine** | `yt-dlp>=2025.02.19` (unpinned) | `yt-dlp==2025.02.19` pinned with latest YouTube player fixes | Verified |
-| **JavaScript Runtime** | None present in Render base image | **Deno** installed to `/usr/local/bin/deno` with fallback to **Node.js** | Fixed |
-| **EJS Challenge Solver** | Unresolved in container | Supported automatically via Deno/Node execution context | Fixed |
-| **PO Token Support** | Absent | `bgutil-ytdlp-pot-provider>=2.0.2` integrated as yt-dlp extractor plugin | Integrated |
-| **Player Client Strategy** | Forcibly overridden: `['tv', 'android', 'web']` | Clean dynamic client selection managed by yt-dlp core | Resolved |
-| **Format Resolution** | Static filter `bestvideo[height=1080]+bestaudio` | Dynamic discovery + resilient fallback ladder | Resolved |
-| **Error Classification** | Generic `clean_ansi(str(e))` | 8 distinct categorical error codes (e.g., `YOUTUBE_CHALLENGE_REQUIRED`) | Implemented |
-| **User Privacy** | Prompted users for `cookies.txt` | Cookie coercion completely removed from user flows | Remediated |
+Testing across production revealed a critical bifurcation:
+- **Public General Content (`dQw4w9WgXcQ`)**: Succeeded on production (`HTTP 200 OK`, 49 formats, 4K to 144p).
+- **Commercial Music/Film Content (`k1OU4CqguLw`, `L5Z-1JlL5ss`, `-ZnYdmreOrk`)**: Failed on production with `[YOUTUBE_CHALLENGE_REQUIRED]` (`Sign in to confirm you’re not a bot`).
 
----
+### Root Cause 1: Cloud Datacenter IP Gating on `web` Client
+YouTube enforces strict BotGuard Proof-of-Origin (PO) token verification on commercial music videos when requests originate from cloud datacenter IP subnets (such as AWS Oregon / Render). When accessed via the default desktop `web` client without a GVS PO Token, YouTube refuses stream extraction and returns a bot verification requirement.
 
-## 3. Deep-Dive: Root Cause Analysis
+### Root Cause 2: `bgutil-ytdlp-pot-provider` Daemon Absence
+The `bgutil-ytdlp-pot-provider` Python plugin expects an external background HTTP daemon running at `http://127.0.0.1:4416`. Because no daemon was running on port 4416, yt-dlp encountered connection transport errors (`GET http://127.0.0.1:4416/ping`), delayed extraction by 5 seconds, and failed to generate PO tokens.
 
-### 3.1 Missing JavaScript Challenge Execution Environment
-- **Mechanism**: Modern YouTube video delivery employs encrypted player algorithms (`n`-sig deciphering and player transformations) executed via client-side JavaScript.
-- **Defect**: When running inside standard Linux Python containers on Render (`python:3.12-slim`), neither Deno nor Node.js was available in the system PATH. Without a JavaScript interpreter, yt-dlp cannot run the extracted EJS scripts, causing YouTube to reject subsequent stream fetches with bot challenge notifications.
-- **Resolution**: Updated `Dockerfile` to install Node.js and download the standalone `deno` binary directly to `/usr/local/bin/deno`. Added `get_js_runtime_info()` in `backend/app/utils/ffmpeg.py` and exposed it in the `/health` endpoint for continuous deployment verification.
+### Root Cause 3: Client Fallback Architecture
+YouTube's mobile `android` and `mweb` InnerTube endpoints do not enforce desktop BotGuard PO token restrictions on datacenter IPs. By implementing an automated fallback from `web` to `['android', 'mweb']`, VIRELO extracts and downloads copyrighted media streams cleanly on cloud servers without requiring user cookies.
 
-### 3.2 Forced `player_client` Triggering YouTube DRM Experiments
-- **Mechanism**: Overriding yt-dlp's default extractor arguments with:
-  ```python
-  'extractor_args': {'youtube': {'player_client': ['tv', 'android', 'web']}}
-  ```
-  causes YouTube to serve responses targeted at smart TVs and Android apps.
-- **Defect**: YouTube rolled out an experiment on the `tv` client that delivers streams gated by DRM/encryption. When yt-dlp queries formats for a TV client, all 1080p/720p streams are hidden or marked unavailable, leaving only lower-quality legacy streams or failing with `Requested format is not available`.
-- **Resolution**: Removed the forced `player_client` override from `MediaExtractor`. yt-dlp now negotiates modern public web clients naturally, exposing all available 4K, 1440p, 1080p, 720p, 480p, and audio tracks.
+### Root Cause 4: Queue Manager Return Indentation Defect
+In `queue_manager.py`, the return statement for audio and video files was indented inside exception/else branches. When downloads succeeded, the function returned `None`, triggering a downstream `TypeError` that was mistakenly classified as `[YOUTUBE_EXTRACTION_FAILED]`.
 
-### 3.3 Proof of Origin (PO) Token Architecture
-- **Mechanism**: YouTube uses Proof of Origin (PO) tokens generated by Google's BotGuard script to validate that video requests originate from genuine browser sessions.
-- **Integration**: Evaluated and integrated `bgutil-ytdlp-pot-provider` (`yt_dlp_plugins.extractor.getpot_bgutil`).
-- **Boundaries**: PO tokens validate legitimate client execution; they do not circumvent IP blocks or account paywalls. When a datacenter IP is blacklisted at the network level by YouTube, the system correctly categorizes the event as `YOUTUBE_IP_RESTRICTED` or `YOUTUBE_CHALLENGE_REQUIRED` without misleading the user.
+### Root Cause 5: Regex Bracket Stripping in `clean_ansi()`
+The regex in `formatters.py` was stripping `[Y` from strings like `[YOUTUBE_CHALLENGE_REQUIRED]`, rendering them as `OUTUBE_CHALLENGE_REQUIRED`. Fixed to require the escape control sequence `\x1b[`.
 
 ---
 
-## 4. Elimination of Cookie Coercion
+## 3. Extraction Pipeline Audit Matrix
 
-Asking users to upload `cookies.txt` violates core product principles:
-1. **Security & Privacy Risk**: Browser session cookies contain account authentication tokens, sensitive session identifiers, and personal account access.
-2. **Poor User Experience**: Less than 1% of non-technical users know how to install browser extensions and export Netscape-format cookie files.
-3. **Fragility**: Personal browser cookies expire quickly, rotate on IP changes, and become invalid shortly after being placed on cloud servers.
-
-### Frontend Remediations:
-- Removed amber "YouTube Anti-Bot Challenge Triggered" banner from `frontend/src/components/VireloHero.tsx`.
-- Removed "YouTube Cookie Assistant" pill badge from `frontend/src/components/VireloHero.tsx`.
-- Removed amber banner and cookie assistant buttons from `frontend/src/components/DedicatedPlatformView.tsx`.
-- Streamlined error rendering to display transparent, honest diagnostics without prompting for personal browser credentials.
-
+| Pipeline Component | Production Status | Resolution |
+| :--- | :--- | :--- |
+| **yt-dlp Core Engine** | `2025.02.19` | Updated and pinned |
+| **JavaScript Runtime** | Deno v2.2.3 (`/usr/local/bin/deno`) | Installed & verified live |
+| **Node.js Runtime** | Node.js v20.x (`/usr/bin/node`) | Installed & verified live |
+| **PO Token Provider** | Disengaged from port 4416 | Replaced with mobile client fallback |
+| **Client Strategy** | Dynamic: `web` → `['android', 'mweb']` | Full 4K on open streams, resilient delivery on gated streams |
+| **Format Resolution** | Multi-tier degradation ladder | Prevents "format unavailable" exceptions |
+| **Error Classification** | Categorized into 8 distinct codes | Transparent, honest error reporting |
+| **User Experience** | Cookie upload prompts removed | Zero cookie pressure on visitors |

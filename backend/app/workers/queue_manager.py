@@ -335,13 +335,14 @@ class QueueManager:
                         prep_file = fb_ydl.prepare_filename(down_info)
                 else:
                     raise dl_err
-                base, _ = os.path.splitext(prep_file)
-                expected_file = f"{base}.{intermediate_fmt}"
-                res_file = expected_file if os.path.exists(expected_file) else prep_file
 
-                if intermediate_fmt != target_fmt:
-                    res_file = self.converter.transcode_audio(res_file, target_fmt, bitrate=bitrate)
-                return res_file
+            base, _ = os.path.splitext(prep_file)
+            expected_file = f"{base}.{intermediate_fmt}"
+            res_file = expected_file if os.path.exists(expected_file) else prep_file
+
+            if intermediate_fmt != target_fmt:
+                res_file = self.converter.transcode_audio(res_file, target_fmt, bitrate=bitrate)
+            return res_file
 
         else:  # Video or GIF
             is_gif = (target_fmt == "gif")

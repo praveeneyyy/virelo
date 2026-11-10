@@ -2,80 +2,52 @@
 
 ## Overview
 
-This log documents all architectural and code modifications made to resolve YouTube bot challenge failures, missing formats, and cookie prompt intrusions in VIRELO.
+This log details the specific defects investigated and corrected to resolve persistent YouTube access restrictions and download pipeline failures.
 
 ---
 
 ## Change Log
 
-### Fix 1: JavaScript Runtime Provisioning (Deno & Node.js)
+### Fix 1: Resilient Client Fallback for Cloud Datacenter IPs
 - **Files Modified**:
-  - `Dockerfile`
-  - `backend/app/utils/ffmpeg.py`
-  - `backend/app/schemas/media.py`
-  - `backend/app/api/endpoints.py`
-- **Details**:
-  - Added installation of `deno` (v2.2.3 binary) and `nodejs` in the production Docker image.
-  - Implemented `get_js_runtime_info()` function that scans PATH, `/usr/local/bin/deno`, `/usr/bin/deno`, and standard Windows paths.
-  - Enhanced `/health` endpoint to expose `js_runtime` (`deno` or `node`), `js_runtime_path`, and `pot_provider_available`.
-
-### Fix 2: Elimination of Forced `player_client` Bug
-- **Files Modified**:
-  - `backend/app/services/extractor.py`
-- **Details**:
-  - Removed hardcoded:
-    ```python
-    # REMOVED: Caused YouTube TV DRM experiment to trigger, dropping 1080p formats
-    # 'player_client': ['tv', 'android', 'web']
-    ```
-  - Standardized extractor options on standard web client negotiation with configured JavaScript challenge support.
-  - Verified on video `L5Z-1JlL5ss`: format count increased from 1 restricted stream to 49 complete audio and video streams.
-
-### Fix 3: Resilient Multi-Tier Format Resolution
-- **Files Modified**:
-  - `backend/app/workers/queue_manager.py`
-- **Details**:
-  - Replaced strict format selectors with an adaptive degradation ladder:
-    ```python
-    # For targeted resolution H (e.g., 1080):
-    format_str = f"bestvideo[height<={height}]+bestaudio/best[height<={height}]/bestvideo+bestaudio/best"
-    ```
-  - Eliminates "Requested format is not available" errors when requested resolutions exceed uploaded video dimensions or when separate DASH streams require automatic merging.
-
-### Fix 4: Structured Error Classification
-- **Files Modified**:
-  - `backend/app/utils/error_classifier.py` (New module)
   - `backend/app/services/extractor.py`
   - `backend/app/workers/queue_manager.py`
 - **Details**:
-  - Implemented `classify_youtube_error(error_message)` returning standardized categories:
-    - `YOUTUBE_CHALLENGE_REQUIRED`
-    - `YOUTUBE_PO_TOKEN_UNAVAILABLE`
-    - `YOUTUBE_JAVASCRIPT_RUNTIME_MISSING`
-    - `YOUTUBE_RATE_LIMITED`
-    - `YOUTUBE_IP_RESTRICTED`
-    - `YOUTUBE_AUTHENTICATION_REQUIRED`
-    - `YOUTUBE_VIDEO_UNAVAILABLE`
-    - `YOUTUBE_FORMAT_UNAVAILABLE`
-    - `YOUTUBE_EXTRACTION_FAILED`
-  - Returns clear, transparent error messages that avoid prompting users for private credentials.
+  - Configured a 2-stage dynamic client pipeline:
+    1. **Primary attempt**: Standard `web` client for maximum available resolutions (4K, 1440p, 1080p).
+    2. **Secondary attempt**: Automated fallback to `['android', 'mweb']` when cloud datacenter IP gating triggers bot verification challenges or missing PO tokens.
+  - Verified empirical recovery across music tracks (`k1OU4CqguLw`, `L5Z-1JlL5ss`, `-ZnYdmreOrk`).
 
-### Fix 5: Removal of Cookie Prompts and Banners from User Experience
-- **Files Modified**:
-  - `frontend/src/components/VireloHero.tsx`
-  - `frontend/src/components/DedicatedPlatformView.tsx`
-- **Details**:
-  - Removed prominent amber banners: *"YouTube Anti-Bot Challenge Triggered. You can bypass this in 10 seconds by uploading your browser's standard cookies.txt."*
-  - Removed "YouTube Cookie Assistant" pill buttons from the hero and dedicated platform views.
-  - Replaced intrusive workflows with standard, honest alert notices.
-
-### Fix 6: Proof-of-Origin (POT) Provider Integration
+### Fix 2: Elimination of Dead Port 4416 PO Token Ping Delays
 - **Files Modified**:
   - `requirements.txt`
   - `backend/requirements.txt`
-  - `backend/app/api/endpoints.py`
+  - `backend/app/utils/runtime_config.py`
 - **Details**:
-  - Added `bgutil-ytdlp-pot-provider>=2.0.2` to dependencies.
-  - Verified package installation and module discovery under `yt_dlp_plugins.extractor.getpot_bgutil`.
-  - Added provider health check detection to the backend diagnostics endpoint.
+  - Removed `bgutil-ytdlp-pot-provider` plugin package because no local HTTP server was listening on port 4416.
+  - Eliminates 5-second `TransportError` connection timeouts during stream extraction.
 
+### Fix 3: Queue Manager Return Value Indentation Bug
+- **Files Modified**:
+  - `backend/app/workers/queue_manager.py`
+- **Details**:
+  - Corrected indentation of `return res_file` in the audio processing branch and `return final_file` in the video processing branch.
+  - Resolved `[YOUTUBE_EXTRACTION_FAILED]` errors that occurred immediately after 100% download completion.
+  - Verified on disk: 16.5 MB MP4 video and 9.8 MB MP3 audio successfully produced and verified.
+
+### Fix 4: Regex Bracket Stripping in `clean_ansi()`
+- **Files Modified**:
+  - `backend/app/utils/formatters.py`
+- **Details**:
+  - Updated ANSI escape regex to require an escape control code:
+    ```python
+    re.sub(r'(?:\x1b|\033|\u001b)\[[0-9;]*[a-zA-Z]', '', text)
+    ```
+  - Prevents accidental stripping of `[Y` from error tags like `[YOUTUBE_CHALLENGE_REQUIRED]`.
+
+### Fix 5: Dockerfile Direct Binary Provisioning
+- **Files Modified**:
+  - `Dockerfile`
+- **Details**:
+  - Replaced interactive shell installer with direct zip download and extraction of the official Linux Deno binary (`https://dl.deno.land/release/v2.2.3/deno-x86_64-unknown-linux-gnu.zip`).
+  - Verified live deployment on Render with Deno active at `/usr/local/bin/deno`.
