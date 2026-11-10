@@ -1,0 +1,9 @@
+# VIRELO Robots Policy
+# https://virelo.app (or current deployment origin)
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /ws/
+
+# Reference to dynamic & static XML Sitemap
+Sitemap: /sitemap.xml
