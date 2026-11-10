@@ -18,3 +18,4 @@ services:
         value: "best"
       - key: DEFAULT_AUDIO_BITRATE
         value: "320"
+
