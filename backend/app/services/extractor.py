@@ -50,11 +50,6 @@ class MediaExtractor:
             'socket_timeout': 20,
             'ignoreerrors': False,
             'http_headers': {
-                'User-Agent': (
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                    'AppleWebKit/537.36 (KHTML, like Gecko) '
-                    'Chrome/131.0.0.0 Safari/537.36'
-                ),
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         }
@@ -208,6 +203,7 @@ class MediaExtractor:
 
             if 'youtube.com' in url.lower() or 'youtu.be' in url.lower():
                 code, user_msg = classify_youtube_error(clean_err)
+                print(f"[YouTube Extraction Diagnostic] Code: {code} | Error: {clean_err[:200]}")
                 raise ValueError(f"[{code}] {user_msg}")
 
             raise ValueError(clean_err or "Unable to extract media metadata from the provided URL.")

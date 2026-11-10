@@ -9,6 +9,7 @@ import urllib.parse
 import uuid
 import time
 from typing import List, Dict, Any, Optional
+import yt_dlp
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
 
@@ -426,6 +427,7 @@ def get_system_health():
     return HealthResponse(
         status="healthy",
         app_version=settings.VERSION,
+        ytdlp_version=yt_dlp.version.__version__,
         ffmpeg_available=bool(f_info.get("ffmpeg")),
         ffmpeg_path=f_info.get("ffmpeg"),
         ffprobe_available=bool(f_info.get("ffprobe")),

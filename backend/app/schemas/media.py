@@ -109,6 +109,7 @@ class SettingsUpdate(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     app_version: str
+    ytdlp_version: Optional[str] = None
     ffmpeg_available: bool
     ffmpeg_path: Optional[str] = None
     ffprobe_available: bool

@@ -20,7 +20,7 @@ ERROR_MAPPINGS = [
     (
         "YOUTUBE_CHALLENGE_REQUIRED",
         ["sign in to confirm you’re not a bot", "confirm you're not a bot", "automated challenge", "bot challenge"],
-        "YouTube has flagged automated stream queries for this video. Access is currently restricted by platform detection."
+        "YouTube has restricted automated stream extraction for this media from cloud hosting IP ranges (Render/AWS). Public non-restricted videos remain accessible."
     ),
     (
         "YOUTUBE_RATE_LIMITED",
