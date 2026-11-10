@@ -290,12 +290,6 @@ class QueueManager:
             'no_warnings': True,
             'ignoreerrors': False,
             'remote_components': {'ejs:github'},
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['tv', 'android', 'web'],
-                    'player_skip': ['webpage', 'configs']
-                }
-            },
             'progress_hooks': [progress_hook],
         }
 
@@ -327,7 +321,7 @@ class QueueManager:
         postprocessors = []
 
         if media_type == "audio":
-            opts['format'] = 'bestaudio/best'
+            opts['format'] = 'bestaudio/bestvideo+bestaudio/best'
             standard_audio = ["mp3", "m4a", "flac", "wav", "opus", "ogg", "aac"]
             intermediate_fmt = target_fmt if target_fmt in standard_audio else "wav"
 
@@ -361,7 +355,7 @@ class QueueManager:
                 format_spec = "bestvideo+bestaudio/best"
             else:
                 h = int(re.sub(r'\D', '', quality)) if re.search(r'\d+', quality) else 1080
-                format_spec = f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+                format_spec = f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/bestvideo+bestaudio/best"
 
             opts['format'] = format_spec
             merge_fmt = "mp4" if is_gif else (target_fmt if target_fmt in ["mp4", "mkv", "webm"] else "mp4")

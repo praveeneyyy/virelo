@@ -11,6 +11,30 @@ winget_links = os.path.expandvars(r'%LOCALAPPDATA%\Microsoft\WinGet\Links')
 if os.path.exists(winget_links) and winget_links not in os.environ.get('PATH', ''):
     os.environ['PATH'] = winget_links + os.pathsep + os.environ.get('PATH', '')
 
+nodejs_dir = r"C:\Program Files\nodejs"
+if os.path.exists(nodejs_dir) and nodejs_dir not in os.environ.get('PATH', ''):
+    os.environ['PATH'] = nodejs_dir + os.pathsep + os.environ.get('PATH', '')
+
+
+def get_node_path() -> Optional[str]:
+    """
+    Locates Node.js binary for executing yt-dlp EJS JavaScript challenges.
+    """
+    sys_node = shutil.which("node")
+    if sys_node and os.path.exists(sys_node):
+        return sys_node
+
+    candidates = [
+        r"C:\Program Files\nodejs\node.exe",
+        r"C:\Program Files (x86)\nodejs\node.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\nodejs\node.exe"),
+        os.path.expandvars(r"%APPDATA%\npm\node.exe"),
+    ]
+    for cand in candidates:
+        if os.path.isfile(cand):
+            return cand
+    return None
+
 
 def get_ffmpeg_info() -> Dict[str, Optional[str]]:
     """

@@ -1,7 +1,7 @@
 """
 Pydantic schemas for VIRELO API contracts.
 """
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel, Field
 
 
@@ -29,7 +29,7 @@ class ExtractResponse(BaseModel):
     uploader: Optional[str] = None
     thumbnail: Optional[str] = None
     duration: Optional[str] = None
-    duration_seconds: Optional[int] = None
+    duration_seconds: Optional[Union[int, float]] = None
     file_size_str: Optional[str] = None
     is_direct_file: bool = False
     media_type: str  # video, audio, image, file

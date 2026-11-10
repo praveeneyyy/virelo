@@ -11,7 +11,7 @@ import requests
 import yt_dlp
 from yt_dlp.extractor import gen_extractors
 
-from backend.app.utils.ffmpeg import get_ffmpeg_info
+from backend.app.utils.ffmpeg import get_ffmpeg_info, get_node_path
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
 
 COMMON_EXTS = {
@@ -27,7 +27,7 @@ class MediaExtractor:
         info = get_ffmpeg_info()
         self.ffmpeg_dir = info.get('dir')
         self.ffmpeg_binary = info.get('ffmpeg')
-        self.node_path = shutil.which("node")
+        self.node_path = get_node_path()
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': (
@@ -48,12 +48,6 @@ class MediaExtractor:
             'socket_timeout': 20,
             'ignoreerrors': False,
             'remote_components': {'ejs:github'},
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['tv', 'android', 'web'],
-                    'player_skip': ['webpage', 'configs']
-                }
-            },
             'http_headers': {
                 'User-Agent': (
                     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -261,7 +255,7 @@ class MediaExtractor:
             "platform": platform,
             "thumbnail": raw.get('thumbnail'),
             "duration": format_seconds(raw.get('duration')),
-            "duration_seconds": raw.get('duration'),
+            "duration_seconds": int(round(float(raw.get('duration')))) if raw.get('duration') is not None else None,
             "file_size": raw.get('filesize') or raw.get('filesize_approx'),
             "media_type": media_type,
             "available_qualities": sorted_qualities,

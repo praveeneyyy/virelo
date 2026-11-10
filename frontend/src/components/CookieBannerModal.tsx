@@ -342,3 +342,4 @@ export const CookieBannerModal: React.FC<CookieBannerModalProps> = ({
     </div>
   );
 };
+

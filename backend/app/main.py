@@ -34,6 +34,19 @@ async def retention_cleanup_loop():
 async def lifespan(app: FastAPI):
     # Startup
     init_db()
+
+    # Hydrate cookies from environment variable if configured (useful for Render/Docker deployments)
+    env_cookies = os.getenv("YOUTUBE_COOKIES") or os.getenv("YTDLP_COOKIES_TEXT")
+    if env_cookies and env_cookies.strip():
+        cookie_dest = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "cookies.txt"))
+        os.makedirs(os.path.dirname(cookie_dest), exist_ok=True)
+        try:
+            with open(cookie_dest, "w", encoding="utf-8") as f:
+                f.write(env_cookies.strip())
+            print(f"[{settings.APP_NAME}] Loaded YouTube cookies from environment variable ({len(env_cookies)} bytes).")
+        except Exception as e:
+            print(f"[{settings.APP_NAME} Cookie Env Error] {e}")
+
     loop = asyncio.get_running_loop()
     queue_manager.set_event_loop(loop)
     cleanup_task = asyncio.create_task(retention_cleanup_loop())
