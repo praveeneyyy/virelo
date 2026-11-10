@@ -14,16 +14,13 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
-  Zap,
-  Cookie,
-  AlertTriangle
+  Zap
 } from 'lucide-react';
 import { ViewTab, MediaInfo, DownloadPayload, DownloadJob } from '../types';
 import { FormatControls } from './FormatControls';
 import { MediaPreview } from './MediaPreview';
 import { DownloadProgress } from './DownloadProgress';
 import { PlatformIcon } from './PlatformIcons';
-import { CookieBannerModal } from './CookieBannerModal';
 
 export type DedicatedPlatformKey = 'youtube' | 'instagram' | 'tiktok' | 'facebook' | 'pinterest' | 'reddit';
 
@@ -257,7 +254,6 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
 }) => {
   const config = PLATFORM_CONFIGS[platform];
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [cookieModalOpen, setCookieModalOpen] = useState(false);
   const otherPlatforms = ALL_PLATFORMS.filter(p => p.key !== platform);
 
   const handlePasteSample = () => {
@@ -361,16 +357,6 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-2.5 px-2 text-xs text-slate-500">
             <div className="flex items-center gap-3">
               <span>Direct CDN stream discovery & zero re-encoding</span>
-              {platform === 'youtube' && (
-                <button
-                  type="button"
-                  onClick={() => setCookieModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200 transition-colors cursor-pointer"
-                >
-                  <Cookie size={11} />
-                  <span>Cookie Assistant</span>
-                </button>
-              )}
             </div>
             <button
               onClick={handlePasteSample}
@@ -381,39 +367,7 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
           </div>
         </div>
 
-        {/* YOUTUBE BOT CHALLENGE RECOVERY BANNER */}
-        {extractError && (extractError.toLowerCase().includes('bot') || extractError.toLowerCase().includes('cookie') || extractError.toLowerCase().includes('sign in to confirm')) ? (
-          <div className="max-w-2xl mx-auto p-4 rounded-xl bg-amber-50 border border-amber-300 text-left text-xs sm:text-sm text-amber-900 flex items-start gap-3 shadow-sm">
-            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-600" />
-            <div className="space-y-2 flex-1">
-              <div>
-                <strong className="font-bold text-amber-950 block text-xs sm:text-sm">YouTube Anti-Bot Challenge Triggered</strong>
-                <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
-                  YouTube is testing this link with an automated challenge. You can bypass this in 10 seconds by uploading your browser's standard cookies.txt.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 pt-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setCookieModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-lg shadow-sm transition-colors cursor-pointer"
-                >
-                  <Cookie size={13} />
-                  <span>Open YouTube Cookie Assistant</span>
-                </button>
-                <a
-                  href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-amber-900 underline hover:text-amber-950"
-                >
-                  Get Chrome Extension →
-                </a>
-              </div>
-            </div>
-          </div>
-        ) : extractError ? (
-          /* Standard Error notification if any */
+        {extractError && (
           <div className="max-w-2xl mx-auto p-4 rounded-xl bg-red-50 border border-red-200 text-left text-xs text-red-700 flex items-start gap-3">
             <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -421,7 +375,7 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
               <span>{extractError}</span>
             </div>
           </div>
-        ) : null}
+        )}
 
       </section>
 
@@ -646,12 +600,6 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
           </button>
         </div>
       </section>
-
-      {/* Cookie Assistant Modal for YouTube bot verification bypass */}
-      <CookieBannerModal
-        isOpen={cookieModalOpen}
-        onClose={() => setCookieModalOpen(false)}
-      />
 
     </div>
   );

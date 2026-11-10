@@ -22,6 +22,7 @@ from backend.app.services.media_converter import MediaConverter
 from backend.app.services.direct_downloader import DirectStreamDownloader
 from backend.app.utils.ffmpeg import get_ffmpeg_info
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
+from backend.app.utils.error_classifier import classify_youtube_error
 
 
 class ConnectionManager:
@@ -256,6 +257,9 @@ class QueueManager:
             add_history_entry(job)
         except Exception as exc:
             clean_err = clean_ansi(str(exc))
+            if 'youtube.com' in job.get("url", "").lower() or 'youtu.be' in job.get("url", "").lower():
+                code, user_msg = classify_youtube_error(clean_err)
+                clean_err = f"[{code}] {user_msg}"
             job["status"] = "failed"
             job["error"] = clean_err or "Download process encountered an unexpected failure."
             self.notify_job_update(job)

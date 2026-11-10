@@ -14,3 +14,4 @@ All platforms tested against live production endpoints using real public media U
 | **Vimeo** | `vimeo.com/...` | ✅ Passed | Progressive & HLS streams | ✅ Passed | ✅ Passed | **FULLY VERIFIED** | Public videos supported. Password/private videos restricted. |
 | **SoundCloud** | `soundcloud.com/...` | ✅ Passed | Stream HLS/MP3 | N/A | ✅ Passed | **FULLY VERIFIED** | Fractional durations handled cleanly. Tested on 3-hour relaxing music stream. |
 | **Direct CDN Files** | Direct `.mp4`, `.webm`, `.mp3` URLs | ✅ Passed | Direct HTTP Stream | ✅ Passed | ✅ Passed | **FULLY VERIFIED** | Tested with MDN `flower.mp4` with resumption support. |
+

@@ -115,6 +115,9 @@ class HealthResponse(BaseModel):
     ffprobe_path: Optional[str] = None
     node_available: bool
     node_path: Optional[str] = None
+    js_runtime: Optional[str] = None
+    js_runtime_path: Optional[str] = None
+    pot_provider_available: bool = True
     disk_free_gb: float
     active_jobs: int
     queue_length: int

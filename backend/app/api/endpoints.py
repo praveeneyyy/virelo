@@ -26,7 +26,7 @@ from backend.app.schemas.media import (
 from backend.app.services.extractor import MediaExtractor
 from backend.app.services.media_converter import MediaConverter
 from backend.app.workers.queue_manager import queue_manager, ws_manager
-from backend.app.utils.ffmpeg import get_ffmpeg_info
+from backend.app.utils.ffmpeg import get_ffmpeg_info, get_js_runtime_info
 from backend.app.utils.formatters import get_disk_free_gb, clean_ansi, format_bytes
 
 router = APIRouter()
@@ -402,13 +402,21 @@ def update_settings(update: SettingsUpdate):
 @router.get("/health", response_model=HealthResponse)
 def get_system_health():
     """
-    Comprehensive diagnostics reporting FFmpeg, FFprobe, Node.js, disk space, and active jobs.
+    Comprehensive diagnostics reporting FFmpeg, FFprobe, Node/Deno JS runtime, disk space, and active jobs.
     """
     f_info = get_ffmpeg_info()
-    node_path = shutil.which("node")
+    js_info = get_js_runtime_info()
+    node_path = shutil.which("node") or (js_info.get("path") if js_info.get("runtime") == "node" else None)
     jobs = get_all_jobs()
     active = sum(1 for j in jobs if j.get("status") in ("downloading", "converting"))
     queued = sum(1 for j in jobs if j.get("status") == "queued")
+
+    pot_available = False
+    try:
+        import yt_dlp_plugins.extractor.getpot_bgutil  # noqa: F401
+        pot_available = True
+    except ImportError:
+        pass
 
     return HealthResponse(
         status="healthy",
@@ -417,8 +425,11 @@ def get_system_health():
         ffmpeg_path=f_info.get("ffmpeg"),
         ffprobe_available=bool(f_info.get("ffprobe")),
         ffprobe_path=f_info.get("ffprobe"),
-        node_available=bool(node_path),
-        node_path=node_path,
+        node_available=bool(node_path or js_info.get("available")),
+        node_path=node_path or js_info.get("path"),
+        js_runtime=js_info.get("runtime"),
+        js_runtime_path=js_info.get("path"),
+        pot_provider_available=pot_available,
         disk_free_gb=get_disk_free_gb(settings.DOWNLOADS_PATH),
         active_jobs=active,
         queue_length=queued,

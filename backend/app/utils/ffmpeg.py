@@ -5,7 +5,7 @@ Ensures WinGet binaries, system PATH, and fallback packages are resolved and val
 import os
 import shutil
 import subprocess
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 winget_links = os.path.expandvars(r'%LOCALAPPDATA%\Microsoft\WinGet\Links')
 if os.path.exists(winget_links) and winget_links not in os.environ.get('PATH', ''):
@@ -16,24 +16,51 @@ if os.path.exists(nodejs_dir) and nodejs_dir not in os.environ.get('PATH', ''):
     os.environ['PATH'] = nodejs_dir + os.pathsep + os.environ.get('PATH', '')
 
 
-def get_node_path() -> Optional[str]:
+def get_js_runtime_info() -> Dict[str, Any]:
     """
-    Locates Node.js binary for executing yt-dlp EJS JavaScript challenges.
+    Detects available JavaScript runtimes (Deno, Node) required for yt-dlp EJS challenges.
+    Deno is preferred by yt-dlp official specification; Node is the fallback.
     """
+    # 1. Check Deno (Official yt-dlp preferred runtime)
+    sys_deno = shutil.which("deno")
+    if sys_deno and os.path.exists(sys_deno):
+        return {"available": True, "runtime": "deno", "path": sys_deno}
+
+    deno_candidates = [
+        "/usr/local/bin/deno",
+        "/usr/bin/deno",
+        os.path.expandvars(r"%USERPROFILE%\.deno\bin\deno.exe"),
+        r"C:\ProgramData\chocolatey\bin\deno.exe",
+    ]
+    for c in deno_candidates:
+        if os.path.isfile(c):
+            return {"available": True, "runtime": "deno", "path": c}
+
+    # 2. Check Node.js
     sys_node = shutil.which("node")
     if sys_node and os.path.exists(sys_node):
-        return sys_node
+        return {"available": True, "runtime": "node", "path": sys_node}
 
-    candidates = [
+    node_candidates = [
+        "/usr/local/bin/node",
+        "/usr/bin/node",
         r"C:\Program Files\nodejs\node.exe",
         r"C:\Program Files (x86)\nodejs\node.exe",
         os.path.expandvars(r"%LOCALAPPDATA%\Programs\nodejs\node.exe"),
         os.path.expandvars(r"%APPDATA%\npm\node.exe"),
     ]
-    for cand in candidates:
-        if os.path.isfile(cand):
-            return cand
-    return None
+    for c in node_candidates:
+        if os.path.isfile(c):
+            return {"available": True, "runtime": "node", "path": c}
+
+    return {"available": False, "runtime": None, "path": None}
+
+
+def get_node_path() -> Optional[str]:
+    """
+    Locates JS runtime binary for executing yt-dlp EJS JavaScript challenges.
+    """
+    return get_js_runtime_info().get("path")
 
 
 def get_ffmpeg_info() -> Dict[str, Optional[str]]:

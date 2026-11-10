@@ -35,3 +35,4 @@ All formats verified with genuine stream extraction, transcoding, and container 
 | :--- | :--- | :---: | :--- | :---: |
 | **Direct MP4** | MDN CC0 `flower.mp4` | 1.1 MB | 64KB chunked HTTP stream | **PASS** |
 | **SoundCloud Audio** | Public 3-hour relaxing piano stream | ~150 MB | Progressive HTTP chunking | **PASS** |
+

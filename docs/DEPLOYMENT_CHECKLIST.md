@@ -44,3 +44,4 @@ Configure the following in your Render Web Service settings:
 4. **Sitemap:** `GET /sitemap.xml` contains all canonical public routes.
 5. **Robots:** `GET /robots.txt` points to `sitemap.xml` and blocks internal routes (`/api/`, `/download/`).
 6. **Live Extraction Test:** Test `https://www.youtube.com/watch?v=dQw4w9WgXcQ` via `POST /api/extract` returns 49 formats.
+

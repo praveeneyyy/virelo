@@ -11,8 +11,9 @@ import requests
 import yt_dlp
 from yt_dlp.extractor import gen_extractors
 
-from backend.app.utils.ffmpeg import get_ffmpeg_info, get_node_path
+from backend.app.utils.ffmpeg import get_ffmpeg_info, get_node_path, get_js_runtime_info
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
+from backend.app.utils.error_classifier import classify_youtube_error
 
 COMMON_EXTS = {
     'video': {'mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', '3gp', 'ts', 'm4v'},
@@ -207,6 +208,10 @@ class MediaExtractor:
             forced_probe = self._probe_direct_file(url)
             if forced_probe:
                 return forced_probe
+
+            if 'youtube.com' in url.lower() or 'youtu.be' in url.lower():
+                code, user_msg = classify_youtube_error(clean_err)
+                raise ValueError(f"[{code}] {user_msg}")
 
             raise ValueError(clean_err or "Unable to extract media metadata from the provided URL.")
 

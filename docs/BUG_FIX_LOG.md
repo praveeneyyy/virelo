@@ -48,3 +48,4 @@
 * **Root Cause:** Browsers do not permit websites to silently write to arbitrary local directories.
 * **Fix Implemented:** Rewrote copy to state: "Download your processed file directly to your device" with verified `Content-Disposition: attachment` headers.
 * **Verification:** Tested standard browser file delivery on desktop and mobile viewports.
+

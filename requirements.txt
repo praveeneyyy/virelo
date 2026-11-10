@@ -9,3 +9,4 @@ mutagen>=1.47.0
 imageio-ffmpeg>=0.5.1
 websockets>=13.0
 python-multipart>=0.0.12
+bgutil-ytdlp-pot-provider>=2.0.2

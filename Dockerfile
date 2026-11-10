@@ -6,16 +6,20 @@ RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Production Python Backend with FFmpeg
+# Stage 2: Production Python Backend with FFmpeg & Deno
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install system utilities & FFmpeg
+# Install system utilities, FFmpeg, Node.js, and Deno (official yt-dlp EJS JavaScript challenge runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     nodejs \
     ca-certificates \
     curl \
+    unzip \
+    && curl -fsSL https://deno.land/install.sh | sh \
+    && mv /root/.deno/bin/deno /usr/local/bin/deno \
+    && chmod +x /usr/local/bin/deno \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements

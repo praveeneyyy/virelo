@@ -48,3 +48,4 @@ VIRELO underwent a comprehensive architectural and functional audit spanning str
 * **Framework:** React 19 + TypeScript + Vite + Tailwind CSS.
 * **Bundle Check:** Clean production build with fast minification (`npm run build` completed in ~430ms).
 * **Styles & Theme:** Consistent Light Mode using Electric Violet brand identity (`#7C3AED`) and clean Poppins typography.
+
