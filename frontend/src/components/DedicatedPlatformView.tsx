@@ -368,13 +368,25 @@ export const DedicatedPlatformView: React.FC<DedicatedPlatformViewProps> = ({
         </div>
 
         {extractError && (
-          <div className="max-w-2xl mx-auto p-4 rounded-xl bg-red-50 border border-red-200 text-left text-xs text-red-700 flex items-start gap-3">
-            <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <strong className="font-semibold block text-red-900 mb-0.5">Stream Analysis Notice</strong>
-              <span>{extractError}</span>
+          (extractError.includes('YOUTUBE_CLOUD_IP_RESTRICTED') || extractError.includes('YOUTUBE_CHALLENGE_REQUIRED') || extractError.includes('restricting automated downloads from our hosting environment')) ? (
+            <div className="max-w-2xl mx-auto p-4 rounded-xl bg-amber-50/90 border border-amber-200 text-left text-xs sm:text-sm text-amber-900 flex items-start gap-3 shadow-xs">
+              <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <strong className="font-semibold block text-amber-950">Platform Restriction Notice</strong>
+                <span className="leading-snug block">
+                  YouTube is currently restricting automated downloads from our hosting environment. Your link may be valid, but VIRELO cannot retrieve this media at the moment. You can try again later or use an available alternative.
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="max-w-2xl mx-auto p-4 rounded-xl bg-red-50 border border-red-200 text-left text-xs text-red-700 flex items-start gap-3">
+              <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <strong className="font-semibold block text-red-900 mb-0.5">Stream Analysis Notice</strong>
+                <span>{extractError}</span>
+              </div>
+            </div>
+          )
         )}
 
       </section>

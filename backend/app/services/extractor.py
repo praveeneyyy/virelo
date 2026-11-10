@@ -15,6 +15,7 @@ from backend.app.utils.ffmpeg import get_ffmpeg_info, get_node_path, get_js_runt
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
 from backend.app.utils.error_classifier import classify_youtube_error
 from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
+from backend.app.services.youtube import youtube_service, YouTubeError
 
 COMMON_EXTS = {
     'video': {'mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', '3gp', 'ts', 'm4v'},
@@ -150,12 +151,26 @@ class MediaExtractor:
         """Comprehensive metadata extraction across streaming networks and direct URLs."""
         url = url.strip()
 
-        # 1. Fast check if direct file URL
+        # 1. Specialized Modular YouTube Service (resilient clients, circuit breaker, 14-code taxonomy)
+        if youtube_service.is_youtube_url(url):
+            try:
+                return youtube_service.extract(url)
+            except YouTubeError as yt_err:
+                code_str = yt_err.code.value if hasattr(yt_err.code, 'value') else str(yt_err.code)
+                print(f"[YouTube Extraction Diagnostic] Code: {code_str} | Message: {yt_err.message}")
+                raise ValueError(f"[{code_str}] {yt_err.message}")
+            except Exception as exc:
+                clean_err = clean_ansi(str(exc))
+                code, user_msg = classify_youtube_error(clean_err)
+                print(f"[YouTube Extraction Diagnostic] Code: {code} | Error: {clean_err[:200]}")
+                raise ValueError(f"[{code}] {user_msg}")
+
+        # 2. Fast check if direct file URL
         direct_info = self._probe_direct_file(url)
         if direct_info:
             return direct_info
 
-        # 2. Extract with yt-dlp (Primary attempt: standard client for highest resolution)
+        # 3. Extract universal platforms with yt-dlp (Instagram, TikTok, Facebook, Reddit, Vimeo, SoundCloud, etc.)
         opts = self._base_opts()
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -171,40 +186,16 @@ class MediaExtractor:
         except Exception as yt_err:
             clean_err = clean_ansi(str(yt_err))
 
-            # 2b. Resilient client fallback for YouTube (e.g. cloud datacenter IPs)
-            if ('youtube.com' in url.lower() or 'youtu.be' in url.lower()) and any(
-                t in clean_err.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
-            ):
-                try:
-                    fallback_opts = dict(opts)
-                    fallback_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
-                    with yt_dlp.YoutubeDL(fallback_opts) as fb_ydl:
-                        fb_info = fb_ydl.extract_info(url, download=False)
-                        if fb_info:
-                            if 'entries' in fb_info and fb_info['entries']:
-                                entries = [e for e in fb_info['entries'] if e]
-                                first = entries[0] if entries else fb_info
-                                first['is_playlist'] = True
-                                first['playlist_count'] = len(entries)
-                                return self._format_ytdlp_info(first, url)
-                            return self._format_ytdlp_info(fb_info, url)
-                except Exception as fb_err:
-                    clean_err = clean_ansi(str(fb_err))
-            # 3. Fallback for Pinterest Pin image
+            # 4. Fallback for Pinterest Pin image
             if 'pinterest' in url.lower() or 'pin.it' in url.lower():
                 pin = self._extract_pinterest_pin(url)
                 if pin:
                     return pin
 
-            # 4. Fallback direct probe
+            # 5. Fallback direct probe
             forced_probe = self._probe_direct_file(url)
             if forced_probe:
                 return forced_probe
-
-            if 'youtube.com' in url.lower() or 'youtu.be' in url.lower():
-                code, user_msg = classify_youtube_error(clean_err)
-                print(f"[YouTube Extraction Diagnostic] Code: {code} | Error: {clean_err[:200]}")
-                raise ValueError(f"[{code}] {user_msg}")
 
             raise ValueError(clean_err or "Unable to extract media metadata from the provided URL.")
 

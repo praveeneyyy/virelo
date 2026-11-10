@@ -24,6 +24,7 @@ from backend.app.utils.ffmpeg import get_ffmpeg_info
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
 from backend.app.utils.error_classifier import classify_youtube_error
 from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
+from backend.app.services.youtube import youtube_service, YouTubeError
 
 
 class ConnectionManager:
@@ -226,11 +227,15 @@ class QueueManager:
                     elif media_type == "video":
                         final_file = self.converter.transcode_video(downloaded_file, target_format)
 
-            # 4. Handle Streaming Platform (yt-dlp)
+            # 4. Handle Specialized YouTube Service
+            elif youtube_service.is_youtube_url(url):
+                final_file = youtube_service.download(job, progress_hook=progress_hook, cancel_token=cancel_token)
+
+            # 5. Handle Universal Streaming Platforms (yt-dlp)
             else:
                 final_file = self._execute_ytdlp_download(job, info, progress_hook, cancel_token)
 
-            # 5. Completion
+            # 6. Completion
             if not os.path.exists(final_file):
                 raise FileNotFoundError(f"Resulting file was not found on disk: {final_file}")
 
@@ -254,6 +259,12 @@ class QueueManager:
         except InterruptedError:
             job["status"] = "cancelled"
             job["error"] = "Download cancelled by user."
+            self.notify_job_update(job)
+            add_history_entry(job)
+        except YouTubeError as yt_err:
+            code_str = yt_err.code.value if hasattr(yt_err.code, 'value') else str(yt_err.code)
+            job["status"] = "failed"
+            job["error"] = f"[{code_str}] {yt_err.message}"
             self.notify_job_update(job)
             add_history_entry(job)
         except Exception as exc:

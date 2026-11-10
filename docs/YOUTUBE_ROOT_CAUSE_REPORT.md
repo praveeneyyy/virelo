@@ -156,3 +156,4 @@ Instead of asking public visitors to provide credentials, the service administra
 
 ### Resolution 3: Dedicated Outbound Egress / Residential Gateway
 If enterprise-level extraction of restricted commercial music videos is required, configure an outbound proxy gateway via `YTDLP_PROXY` in the Render environment settings.
+

@@ -291,19 +291,40 @@ export const VireloHero: React.FC<HeroProps> = ({
         </div>
 
         {extractError && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-700 flex items-start gap-3 shadow-xs">
-            <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600" />
-            <div className="space-y-1">
-              <span className="leading-snug font-medium block">{extractError}</span>
-              <button
-                type="button"
-                onClick={() => onSelectTab && onSelectTab('error')}
-                className="text-xs underline font-semibold text-red-800 hover:opacity-80 cursor-pointer"
-              >
-                View Diagnostic Error Guide & Recovery →
-              </button>
+          (extractError.includes('YOUTUBE_CLOUD_IP_RESTRICTED') || extractError.includes('YOUTUBE_CHALLENGE_REQUIRED') || extractError.includes('restricting automated downloads from our hosting environment')) ? (
+            <div className="p-4 rounded-xl bg-amber-50/90 border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-3 shadow-xs">
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-amber-600" />
+              <div className="space-y-1 text-left">
+                <span className="font-semibold block text-amber-950">Platform Restriction Notice</span>
+                <span className="leading-snug block">
+                  YouTube is currently restricting automated downloads from our hosting environment. Your link may be valid, but VIRELO cannot retrieve this media at the moment. You can try again later or use an available alternative.
+                </span>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab && onSelectTab('error')}
+                    className="text-xs underline font-semibold text-amber-800 hover:opacity-80 cursor-pointer"
+                  >
+                    View Diagnostic Guide →
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-700 flex items-start gap-3 shadow-xs">
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600" />
+              <div className="space-y-1 text-left">
+                <span className="leading-snug font-medium block">{extractError}</span>
+                <button
+                  type="button"
+                  onClick={() => onSelectTab && onSelectTab('error')}
+                  className="text-xs underline font-semibold text-red-800 hover:opacity-80 cursor-pointer"
+                >
+                  View Diagnostic Error Guide & Recovery →
+                </button>
+              </div>
+            </div>
+          )
         )}
       </div>
 
