@@ -1,8 +1,16 @@
 import axios from 'axios';
 import { MediaInfo, DownloadJob, DownloadPayload, SystemHealth, PlatformItem, AppSettings } from '../types';
 
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl.replace(/\/$/, '')}/api`;
+  }
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseUrl(),
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',

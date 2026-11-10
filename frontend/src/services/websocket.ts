@@ -14,9 +14,18 @@ export const useDownloadWebSocket = (onJobUpdate?: (job: DownloadJob) => void) =
 
   const connect = useCallback(() => {
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/ws/downloads`;
+      let wsUrl = '';
+      if (import.meta.env.VITE_WS_URL) {
+        wsUrl = import.meta.env.VITE_WS_URL;
+      } else if (import.meta.env.VITE_API_URL) {
+        const apiUrl = new URL(import.meta.env.VITE_API_URL, window.location.href);
+        const wsProto = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProto}//${apiUrl.host}/ws/downloads`;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        wsUrl = `${protocol}//${host}/ws/downloads`;
+      }
 
       const socket = new WebSocket(wsUrl);
       wsRef.current = socket;
