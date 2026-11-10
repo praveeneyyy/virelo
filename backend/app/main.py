@@ -15,6 +15,7 @@ from backend.app.core.database import init_db, purge_expired_jobs_and_files
 from backend.app.api.endpoints import router as api_router
 from backend.app.workers.queue_manager import queue_manager, ws_manager
 from backend.app.core.seo_data import SEO_ROUTES, inject_seo_to_html
+from backend.app.utils.runtime_config import ensure_server_cookies, get_server_proxy
 
 
 async def retention_cleanup_loop():
@@ -35,17 +36,13 @@ async def lifespan(app: FastAPI):
     # Startup
     init_db()
 
-    # Hydrate cookies from environment variable if configured (useful for Render/Docker deployments)
-    env_cookies = os.getenv("YOUTUBE_COOKIES") or os.getenv("YTDLP_COOKIES_TEXT")
-    if env_cookies and env_cookies.strip():
-        cookie_dest = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "cookies.txt"))
-        os.makedirs(os.path.dirname(cookie_dest), exist_ok=True)
-        try:
-            with open(cookie_dest, "w", encoding="utf-8") as f:
-                f.write(env_cookies.strip())
-            print(f"[{settings.APP_NAME}] Loaded YouTube cookies from environment variable ({len(env_cookies)} bytes).")
-        except Exception as e:
-            print(f"[{settings.APP_NAME} Cookie Env Error] {e}")
+    # Hydrate cookies and proxy from environment variables if configured (Render / Docker)
+    cookie_file = ensure_server_cookies()
+    if cookie_file:
+        print(f"[{settings.APP_NAME}] Server-side YouTube cookies active: {cookie_file}")
+    proxy = get_server_proxy()
+    if proxy:
+        print(f"[{settings.APP_NAME}] Server-side proxy configured for yt-dlp.")
 
     loop = asyncio.get_running_loop()
     queue_manager.set_event_loop(loop)

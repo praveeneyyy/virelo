@@ -57,3 +57,4 @@ When a user requests a quality that is not available (for example, requesting 10
 bestvideo[height<=H]+bestaudio/best[height<=H]/bestvideo+bestaudio/best
 ```
 gracefully selects the highest available resolution under the requested ceiling without throwing a 400 or 500 error.
+

@@ -14,6 +14,7 @@ from yt_dlp.extractor import gen_extractors
 from backend.app.utils.ffmpeg import get_ffmpeg_info, get_node_path, get_js_runtime_info
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
 from backend.app.utils.error_classifier import classify_youtube_error
+from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
 
 COMMON_EXTS = {
     'video': {'mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', '3gp', 'ts', 'm4v'},
@@ -48,7 +49,6 @@ class MediaExtractor:
             'extract_flat': False,
             'socket_timeout': 20,
             'ignoreerrors': False,
-            'remote_components': {'ejs:github'},
             'http_headers': {
                 'User-Agent': (
                     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -58,30 +58,7 @@ class MediaExtractor:
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         }
-        loc = self.ffmpeg_dir or self.ffmpeg_binary
-        if loc:
-            opts['ffmpeg_location'] = loc
-        if self.node_path:
-            opts['js_runtimes'] = {'node': {'path': self.node_path}}
-        else:
-            opts['js_runtimes'] = {'node': {}}
-
-        # Check for cookies file to bypass bot challenges
-        cookie_path = os.getenv("YTDLP_COOKIES_PATH") or os.getenv("COOKIE_FILE")
-        if not cookie_path:
-            candidates = [
-                os.path.abspath("cookies.txt"),
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "cookies.txt")),
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "cookies.txt")),
-            ]
-            for cand in candidates:
-                if os.path.isfile(cand):
-                    cookie_path = cand
-                    break
-        if cookie_path and os.path.isfile(cookie_path):
-            opts['cookiefile'] = cookie_path
-
-        return opts
+        return apply_runtime_ytdlp_opts(opts)
 
     def _probe_direct_file(self, url: str) -> Optional[Dict[str, Any]]:
         """Checks if URL directly points to a media or document file via HTTP headers."""

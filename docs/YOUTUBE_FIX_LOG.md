@@ -78,3 +78,4 @@ This log documents all architectural and code modifications made to resolve YouT
   - Added `bgutil-ytdlp-pot-provider>=2.0.2` to dependencies.
   - Verified package installation and module discovery under `yt_dlp_plugins.extractor.getpot_bgutil`.
   - Added provider health check detection to the backend diagnostics endpoint.
+

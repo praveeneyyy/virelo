@@ -118,6 +118,8 @@ class HealthResponse(BaseModel):
     js_runtime: Optional[str] = None
     js_runtime_path: Optional[str] = None
     pot_provider_available: bool = True
+    server_cookies_active: bool = False
+    server_proxy_active: bool = False
     disk_free_gb: float
     active_jobs: int
     queue_length: int

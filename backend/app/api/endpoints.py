@@ -28,6 +28,7 @@ from backend.app.services.media_converter import MediaConverter
 from backend.app.workers.queue_manager import queue_manager, ws_manager
 from backend.app.utils.ffmpeg import get_ffmpeg_info, get_js_runtime_info
 from backend.app.utils.formatters import get_disk_free_gb, clean_ansi, format_bytes
+from backend.app.utils.runtime_config import ensure_server_cookies, get_server_proxy
 
 router = APIRouter()
 extractor = MediaExtractor()
@@ -418,6 +419,10 @@ def get_system_health():
     except ImportError:
         pass
 
+    cookie_file = ensure_server_cookies()
+    has_server_cookies = bool(cookie_file and os.path.isfile(cookie_file))
+    has_server_proxy = bool(get_server_proxy())
+
     return HealthResponse(
         status="healthy",
         app_version=settings.VERSION,
@@ -430,6 +435,8 @@ def get_system_health():
         js_runtime=js_info.get("runtime"),
         js_runtime_path=js_info.get("path"),
         pot_provider_available=pot_available,
+        server_cookies_active=has_server_cookies,
+        server_proxy_active=has_server_proxy,
         disk_free_gb=get_disk_free_gb(settings.DOWNLOADS_PATH),
         active_jobs=active,
         queue_length=queued,

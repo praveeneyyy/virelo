@@ -23,6 +23,7 @@ from backend.app.services.direct_downloader import DirectStreamDownloader
 from backend.app.utils.ffmpeg import get_ffmpeg_info
 from backend.app.utils.formatters import format_bytes, format_seconds, clean_ansi
 from backend.app.utils.error_classifier import classify_youtube_error
+from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
 
 
 class ConnectionManager:
@@ -293,34 +294,9 @@ class QueueManager:
             'quiet': True,
             'no_warnings': True,
             'ignoreerrors': False,
-            'remote_components': {'ejs:github'},
             'progress_hooks': [progress_hook],
         }
-
-        loc = ffmpeg_dir or ffmpeg_bin
-        if loc:
-            opts['ffmpeg_location'] = loc
-
-        node_path = self.extractor.node_path
-        if node_path:
-            opts['js_runtimes'] = {'node': {'path': node_path}}
-        else:
-            opts['js_runtimes'] = {'node': {}}
-
-        # Check for cookies file to bypass bot challenges
-        cookie_path = os.getenv("YTDLP_COOKIES_PATH") or os.getenv("COOKIE_FILE")
-        if not cookie_path:
-            candidates = [
-                os.path.abspath("cookies.txt"),
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "cookies.txt")),
-                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "cookies.txt")),
-            ]
-            for cand in candidates:
-                if os.path.isfile(cand):
-                    cookie_path = cand
-                    break
-        if cookie_path and os.path.isfile(cookie_path):
-            opts['cookiefile'] = cookie_path
+        opts = apply_runtime_ytdlp_opts(opts)
 
         postprocessors = []
 

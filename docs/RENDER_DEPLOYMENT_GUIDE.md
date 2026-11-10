@@ -107,9 +107,13 @@ Once Render indicates that the deployment is live:
 
 ## 3. Production Environment Variables (Render Dashboard)
 
-| Variable | Recommended Value | Purpose |
+| Variable | Type / Example | Purpose |
 | :--- | :--- | :--- |
+| `YTDLP_COOKIES_TEXT` | Raw Netscape format cookie text | **(Recommended)** Server-side YouTube cookies. Loaded automatically on startup into `/app/data/cookies.txt`. Eliminates bot challenges on cloud datacenter IPs without asking end users. |
+| `YTDLP_COOKIES_B64` | Base64 encoded string | Alternative base64 format for `cookies.txt` content. |
+| `YTDLP_PROXY` | `http://user:pass@host:port` | Optional residential / datacenter proxy URL to route YouTube requests outside cloud ASN blocks. |
 | `PYTHONUNBUFFERED` | `1` | Ensures real-time console logging in Render log stream |
 | `MAX_CONCURRENT_DOWNLOADS` | `3` | Prevents CPU starvation on 512MB/1GB Render instances |
-| `DOWNLOAD_DIR` | `/tmp/downloads` | Ephemeral high-speed scratch space for media processing |
-| `RATE_LIMIT_PER_MINUTE` | `30` | Abuse prevention on public endpoint |
+| `DOWNLOADS_PATH` | `/app/downloads` | Scratch directory for media extraction and merging |
+| `FILE_RETENTION_MINUTES` | `30` | Automatic TTL for file storage cleanup |
+

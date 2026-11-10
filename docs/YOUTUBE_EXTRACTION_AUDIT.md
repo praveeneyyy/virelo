@@ -66,3 +66,4 @@ Asking users to upload `cookies.txt` violates core product principles:
 - Removed "YouTube Cookie Assistant" pill badge from `frontend/src/components/VireloHero.tsx`.
 - Removed amber banner and cookie assistant buttons from `frontend/src/components/DedicatedPlatformView.tsx`.
 - Streamlined error rendering to display transparent, honest diagnostics without prompting for personal browser credentials.
+
