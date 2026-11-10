@@ -41,3 +41,4 @@ def check_youtube_health() -> Dict[str, Any]:
         "server_proxy_active": has_proxy,
         "circuit_breaker_active_downloads": circuit_breaker.active_downloads_count,
     }
+

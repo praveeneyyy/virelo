@@ -27,7 +27,9 @@ import {
   FastForward,
   Palette,
   Folder,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { MediaInfo, DownloadPayload, DownloadJob, ViewTab, MediaType } from '../types';
 import { getFileDownloadUrl, openDownloadsFolder } from '../services/api';
@@ -461,59 +463,123 @@ export const VireloHero: React.FC<HeroProps> = ({
               </div>
 
               {/* Mode Selector Tabs */}
-              <div className="flex items-center gap-1.5 pt-1 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setActiveMode('video')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'video'
-                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                >
-                  <Film size={14} />
-                  <span>Video</span>
-                </button>
+              {!mediaInfo.restriction_notice && (
+                <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setActiveMode('video')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'video'
+                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                  >
+                    <Film size={14} />
+                    <span>Video</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveMode('audio')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'audio'
-                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                >
-                  <Music size={14} />
-                  <span>Audio</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMode('audio')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'audio'
+                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                  >
+                    <Music size={14} />
+                    <span>Audio</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveMode('gif')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'gif'
-                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                >
-                  <Scissors size={14} />
-                  <span>GIF / Clip Tool</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMode('gif')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'gif'
+                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                  >
+                    <Scissors size={14} />
+                    <span>GIF / Clip Tool</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveMode('image')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'image'
-                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                >
-                  <ImageIcon size={14} />
-                  <span>Frame Capture</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMode('image')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'image'
+                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                      }`}
+                  >
+                    <ImageIcon size={14} />
+                    <span>Frame Capture</span>
+                  </button>
+                </div>
+              )}
 
             </div>
 
           </div>
+
+          {/* If stream is restricted on hosting environment */}
+          {mediaInfo.restriction_notice ? (
+            <div className="p-5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-sm text-amber-950">Automated Stream Extraction Restricted by Upstream Platform</h4>
+                  <p className="text-xs sm:text-sm text-amber-800 leading-relaxed">
+                    YouTube has restricted automated stream retrieval for this specific media from cloud hosting provider IP ranges (Render/AWS). Metadata, thumbnail, and author details were verified successfully via YouTube’s official API.
+                  </p>
+                </div>
+              </div>
+
+              {/* Actionable Alternatives */}
+              <div className="pt-2 border-t border-amber-200/80 space-y-3">
+                <span className="text-xs font-semibold text-amber-950 block">Available Legitimate Alternatives:</span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-amber-200/70 space-y-2">
+                    <span className="text-xs font-semibold text-slate-900 block flex items-center gap-1.5">
+                      <RefreshCw size={13} className="text-purple-600" />
+                      Convert Existing Media
+                    </span>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      Already have this file on your device? Transcode, extract MP3/FLAC/WAV audio, or create GIFs with native FFmpeg processing.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onSelectTab && onSelectTab('convert')}
+                      className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium cursor-pointer transition-colors"
+                    >
+                      Open Media Converter →
+                    </button>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-amber-200/70 space-y-2">
+                    <span className="text-xs font-semibold text-slate-900 block flex items-center gap-1.5">
+                      <ExternalLink size={13} className="text-blue-600" />
+                      Watch on YouTube
+                    </span>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      Access and stream this media directly on YouTube via official player applications.
+                    </p>
+                    <a
+                      href={mediaInfo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors"
+                    >
+                      Watch on YouTube ↗
+                    </a>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-amber-800/90 pt-1">
+                  💡 <strong>Tip for local users:</strong> Run VIRELO locally via <code className="px-1.5 py-0.5 rounded bg-amber-100 font-mono text-amber-900">python run_dev.py</code> to download any video without cloud hosting IP restrictions.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
 
           {/* 4A. VIDEO MODE CONTROLS */}
           {activeMode === 'video' && (
@@ -861,6 +927,8 @@ export const VireloHero: React.FC<HeroProps> = ({
               )}
             </button>
           </div>
+            </>
+          )}
 
         </div>
       )}

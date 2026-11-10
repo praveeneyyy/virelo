@@ -68,6 +68,8 @@ def extract_media_info(req: ExtractRequest):
             subtitles=data.get("subtitles", []),
             is_playlist=data.get("is_playlist", False),
             playlist_count=data.get("playlist_count", 0),
+            restriction_notice=data.get("restriction_notice"),
+            restriction_code=data.get("restriction_code"),
         )
     except Exception as e:
         clean_msg = clean_ansi(str(e))

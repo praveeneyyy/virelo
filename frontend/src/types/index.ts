@@ -56,6 +56,8 @@ export interface MediaInfo {
   subtitles: string[];
   is_playlist: boolean;
   playlist_count: number;
+  restriction_notice?: string;
+  restriction_code?: string;
 }
 
 export interface DownloadJob {

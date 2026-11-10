@@ -2,6 +2,8 @@
 VIRELO YouTube Service - Extractor Engine.
 Configures and runs yt-dlp specifically for high-fidelity YouTube stream discovery.
 """
+import json
+import urllib.request
 from typing import Dict, Any, Optional
 import yt_dlp
 
@@ -93,8 +95,56 @@ class YouTubeExtractor:
         code, user_msg = classify_youtube_error(last_clean_err)
         circuit_breaker.record_failure(video_id, code)
 
+        # 5. Legitimate metadata recovery: if stream extraction is restricted on cloud IPs,
+        # fetch official metadata via YouTube oEmbed so users receive genuine title, author, and preview
+        if code in (YouTubeErrorCode.CLOUD_IP_RESTRICTED, YouTubeErrorCode.CHALLENGE_REQUIRED) and video_id:
+            oembed_info = self._fetch_oembed_metadata(video_id, canonical_url)
+            if oembed_info:
+                oembed_info["restriction_code"] = code.value
+                oembed_info["restriction_notice"] = user_msg
+                return oembed_info
+
         raise YouTubeError(
             code=code,
             message=user_msg,
             raw_error=last_clean_err
         )
+
+    def _fetch_oembed_metadata(self, video_id: str, canonical_url: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieves official YouTube video metadata via public oEmbed API.
+        Acts as zero-auth fallback when stream format discovery is restricted by datacenter IP gating.
+        """
+        oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
+        try:
+            req = urllib.request.Request(
+                oembed_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            )
+            with urllib.request.urlopen(req, timeout=7) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return {
+                    "is_direct_file": False,
+                    "url": canonical_url,
+                    "video_id": video_id,
+                    "title": data.get("title") or f"YouTube Video [{video_id}]",
+                    "uploader": data.get("author_name") or "YouTube Creator",
+                    "platform": "YouTube",
+                    "thumbnail": data.get("thumbnail_url") or f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg",
+                    "duration": None,
+                    "duration_seconds": None,
+                    "file_size": None,
+                    "file_size_str": None,
+                    "media_type": "video",
+                    "available_qualities": [],
+                    "available_formats": [],
+                    "formats": [],
+                    "subtitles": [],
+                    "is_playlist": False,
+                    "playlist_count": 0,
+                    "view_count": None,
+                    "description": None,
+                }
+        except Exception:
+            return None
+

@@ -106,3 +106,4 @@ def normalize_youtube_url(url: str) -> str:
         pass
 
     return url.strip()
+

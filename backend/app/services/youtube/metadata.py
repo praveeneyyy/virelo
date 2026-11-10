@@ -100,3 +100,4 @@ def format_youtube_metadata(raw_info: Dict[str, Any], original_url: str) -> Dict
         "view_count": raw_info.get('view_count'),
         "description": (raw_info.get('description') or '')[:500] if raw_info.get('description') else None,
     }
+

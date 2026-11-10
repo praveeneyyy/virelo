@@ -111,3 +111,4 @@ def build_audio_format_spec() -> str:
     Builds dynamic yt-dlp format selector for audio stream extraction.
     """
     return "bestaudio/bestvideo+bestaudio/best"
+

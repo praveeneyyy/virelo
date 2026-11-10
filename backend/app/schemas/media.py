@@ -39,6 +39,8 @@ class ExtractResponse(BaseModel):
     subtitles: List[str] = []
     is_playlist: bool = False
     playlist_count: int = 0
+    restriction_notice: Optional[str] = None
+    restriction_code: Optional[str] = None
 
 
 class DownloadRequest(BaseModel):

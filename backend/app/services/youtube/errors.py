@@ -204,3 +204,4 @@ def classify_youtube_error(exc_str: str) -> Tuple[YouTubeErrorCode, str]:
     return YouTubeErrorCode.DOWNLOAD_FAILED, (
         "Unable to retrieve YouTube stream metadata. Please verify the URL is public and try again."
     )
+

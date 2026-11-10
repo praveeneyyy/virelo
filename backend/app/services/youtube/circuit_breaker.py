@@ -96,3 +96,4 @@ class YouTubeCircuitBreaker:
 
 # Global singleton circuit breaker
 circuit_breaker = YouTubeCircuitBreaker()
+
