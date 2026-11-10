@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { MediaInfo, DownloadJob, DownloadPayload, SystemHealth, PlatformItem, AppSettings } from '../types';
+import { MediaInfo, DownloadJob, DownloadPayload, SystemHealth, PlatformItem, AppSettings, CookieStatus } from '../types';
 
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
@@ -87,3 +87,28 @@ export const openDownloadsFolder = async (): Promise<{ success: boolean; path?: 
   const res = await api.post('/open-downloads-folder');
   return res.data;
 };
+
+export const getCookieStatus = async (): Promise<CookieStatus> => {
+  const res = await api.get<CookieStatus>('/cookies');
+  return res.data;
+};
+
+export const uploadCookieFile = async (file: File): Promise<CookieStatus> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post<CookieStatus>('/cookies/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+};
+
+export const saveCookieText = async (content: string): Promise<CookieStatus> => {
+  const res = await api.post<CookieStatus>('/cookies/text', { content });
+  return res.data;
+};
+
+export const deleteCookies = async (): Promise<CookieStatus> => {
+  const res = await api.delete<CookieStatus>('/cookies');
+  return res.data;
+};
+

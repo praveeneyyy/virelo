@@ -20,7 +20,8 @@ from backend.app.core.database import (
 )
 from backend.app.schemas.media import (
     ExtractRequest, ExtractResponse, DownloadRequest, JobStatus,
-    ConvertRequest, SettingsUpdate, HealthResponse
+    ConvertRequest, SettingsUpdate, HealthResponse,
+    CookieStatusResponse, CookieUpdateRequest
 )
 from backend.app.services.extractor import MediaExtractor
 from backend.app.services.media_converter import MediaConverter
@@ -444,3 +445,69 @@ async def websocket_downloads_endpoint(websocket: WebSocket):
         await ws_manager.disconnect(websocket)
     except Exception:
         await ws_manager.disconnect(websocket)
+
+
+# -----------------------------------------------------------------------------
+# 9. Cookie Management Endpoints (Bypass YouTube Bot Check)
+# -----------------------------------------------------------------------------
+COOKIES_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "cookies.txt"))
+
+@router.get("/cookies", response_model=CookieStatusResponse)
+def get_cookie_status():
+    """Returns whether cookies.txt exists and how many entries it has."""
+    if os.path.isfile(COOKIES_FILE):
+        size = os.path.getsize(COOKIES_FILE)
+        mtime = os.path.getmtime(COOKIES_FILE)
+        line_count = 0
+        try:
+            with open(COOKIES_FILE, "r", encoding="utf-8", errors="ignore") as f:
+                lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+                line_count = len(lines)
+        except Exception:
+            pass
+        return CookieStatusResponse(
+            has_cookies=True,
+            file_path=COOKIES_FILE,
+            file_size_bytes=size,
+            line_count=line_count,
+            last_modified=mtime,
+            message=f"Active cookies.txt loaded ({line_count} records, {format_bytes(size)})"
+        )
+    return CookieStatusResponse(
+        has_cookies=False,
+        message="No cookies.txt loaded. YouTube bot challenges may require cookies."
+    )
+
+
+@router.post("/cookies/upload", response_model=CookieStatusResponse)
+async def upload_cookie_file(file: UploadFile = File(...)):
+    """Upload Netscape-format cookies.txt file directly."""
+    os.makedirs(os.path.dirname(COOKIES_FILE), exist_ok=True)
+    content = await file.read()
+    with open(COOKIES_FILE, "wb") as f:
+        f.write(content)
+    return get_cookie_status()
+
+
+@router.post("/cookies/text", response_model=CookieStatusResponse)
+def save_cookie_text(payload: CookieUpdateRequest):
+    """Save raw pasted Netscape cookie string."""
+    os.makedirs(os.path.dirname(COOKIES_FILE), exist_ok=True)
+    text = payload.content.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Cookie text cannot be empty.")
+    with open(COOKIES_FILE, "w", encoding="utf-8") as f:
+        f.write(text)
+    return get_cookie_status()
+
+
+@router.delete("/cookies", response_model=CookieStatusResponse)
+def delete_cookie_file():
+    """Purge cookies.txt file."""
+    if os.path.isfile(COOKIES_FILE):
+        try:
+            os.remove(COOKIES_FILE)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete cookies: {e}")
+    return get_cookie_status()
+

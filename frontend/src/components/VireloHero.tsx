@@ -27,10 +27,13 @@ import {
   FastForward,
   Palette,
   Folder,
-  CheckCircle2
+  CheckCircle2,
+  Cookie,
+  AlertTriangle
 } from 'lucide-react';
 import { MediaInfo, DownloadPayload, DownloadJob, ViewTab, MediaType } from '../types';
 import { getFileDownloadUrl, openDownloadsFolder } from '../services/api';
+import { CookieBannerModal } from './CookieBannerModal';
 import { 
   YouTubeIcon, 
   InstagramIcon, 
@@ -97,6 +100,9 @@ export const VireloHero: React.FC<HeroProps> = ({
   // Image Frame Grab State
   const [selectedImageFormat, setSelectedImageFormat] = useState('jpg');
   const [imageTimestamp, setImageTimestamp] = useState(1);
+
+  // Cookie Manager Modal
+  const [cookieModalOpen, setCookieModalOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const autoDownloadedJobIdsRef = useRef<Set<string>>(new Set());
@@ -286,11 +292,49 @@ export const VireloHero: React.FC<HeroProps> = ({
           </div>
         </form>
 
-        <p className="text-center text-xs text-slate-500 font-normal">
-          Paste a link from a supported platform. VIRELO will analyze the available media and show compatible download options.
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-normal px-2">
+          <span>Paste a link from a supported platform. VIRELO will analyze compatible download options.</span>
+          <button
+            type="button"
+            onClick={() => setCookieModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200 transition-colors cursor-pointer shrink-0"
+          >
+            <Cookie size={12} />
+            <span>YouTube Cookie Assistant</span>
+          </button>
+        </div>
 
-        {extractError && (
+        {/* YOUTUBE BOT CHALLENGE RECOVERY BANNER */}
+        {extractError && (extractError.toLowerCase().includes('bot') || extractError.toLowerCase().includes('cookie') || extractError.toLowerCase().includes('sign in to confirm')) ? (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs sm:text-sm text-amber-900 flex items-start gap-3 shadow-sm animate-fade-in">
+            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-600" />
+            <div className="space-y-2 flex-1">
+              <div>
+                <strong className="font-bold text-amber-950 block text-xs sm:text-sm">YouTube Anti-Bot Challenge Triggered</strong>
+                <p className="text-xs text-amber-800 leading-relaxed mt-0.5">
+                  YouTube is testing this link with an automated challenge. You can bypass this in 10 seconds by uploading your browser's standard cookies.txt.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setCookieModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
+                >
+                  <Cookie size={13} />
+                  <span>Bypass with Cookies</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectTab && onSelectTab('error')}
+                  className="text-xs underline text-amber-900 hover:text-amber-950 font-medium ml-2 cursor-pointer"
+                >
+                  Diagnostic Guide →
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : extractError ? (
           <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs sm:text-sm text-red-700 flex items-start gap-3 shadow-xs">
             <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600" />
             <div className="space-y-1">
@@ -304,7 +348,15 @@ export const VireloHero: React.FC<HeroProps> = ({
               </button>
             </div>
           </div>
-        )}
+        ) : null}
+
+        {/* COOKIE MANAGER MODAL */}
+        <CookieBannerModal
+          isOpen={cookieModalOpen}
+          onClose={() => setCookieModalOpen(false)}
+          onCookiesUpdated={onExtract}
+          initialError={extractError}
+        />
       </div>
 
       {/* 3. Platform Badges + Browser Web Link Icon */}

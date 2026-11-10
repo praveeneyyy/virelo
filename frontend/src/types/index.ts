@@ -151,3 +151,13 @@ export interface HistoryItem {
   error?: string;
   timestamp: number;
 }
+
+export interface CookieStatus {
+  has_cookies: boolean;
+  file_path?: string;
+  file_size_bytes?: number;
+  line_count?: number;
+  last_modified?: number;
+  message: string;
+}
+

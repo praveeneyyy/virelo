@@ -119,3 +119,17 @@ class HealthResponse(BaseModel):
     active_jobs: int
     queue_length: int
     downloads_dir: str
+
+
+class CookieStatusResponse(BaseModel):
+    has_cookies: bool
+    file_path: Optional[str] = None
+    file_size_bytes: int = 0
+    line_count: int = 0
+    last_modified: Optional[float] = None
+    message: str
+
+
+class CookieUpdateRequest(BaseModel):
+    content: str
+
