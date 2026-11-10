@@ -318,9 +318,23 @@ class QueueManager:
 
             opts['postprocessors'] = postprocessors
 
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                down_info = ydl.extract_info(job["url"], download=True)
-                prep_file = ydl.prepare_filename(down_info)
+            try:
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    down_info = ydl.extract_info(job["url"], download=True)
+                    prep_file = ydl.prepare_filename(down_info)
+            except Exception as dl_err:
+                dl_clean = clean_ansi(str(dl_err))
+                if ('youtube.com' in job.get("url", "").lower() or 'youtu.be' in job.get("url", "").lower()) and any(
+                    t in dl_clean.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
+                ):
+                    fb_opts = dict(opts)
+                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
+                    fb_opts['format'] = 'bestaudio/best'
+                    with yt_dlp.YoutubeDL(fb_opts) as fb_ydl:
+                        down_info = fb_ydl.extract_info(job["url"], download=True)
+                        prep_file = fb_ydl.prepare_filename(down_info)
+                else:
+                    raise dl_err
                 base, _ = os.path.splitext(prep_file)
                 expected_file = f"{base}.{intermediate_fmt}"
                 res_file = expected_file if os.path.exists(expected_file) else prep_file
@@ -360,36 +374,52 @@ class QueueManager:
             if postprocessors:
                 opts['postprocessors'] = postprocessors
 
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                down_info = ydl.extract_info(job["url"], download=True)
-                prep_file = ydl.prepare_filename(down_info)
-                if os.path.exists(prep_file):
-                    final_file = prep_file
+            try:
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    down_info = ydl.extract_info(job["url"], download=True)
+                    prep_file = ydl.prepare_filename(down_info)
+            except Exception as dl_err:
+                dl_clean = clean_ansi(str(dl_err))
+                if ('youtube.com' in job.get("url", "").lower() or 'youtu.be' in job.get("url", "").lower()) and any(
+                    t in dl_clean.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
+                ):
+                    fb_opts = dict(opts)
+                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
+                    fb_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                    with yt_dlp.YoutubeDL(fb_opts) as fb_ydl:
+                        down_info = fb_ydl.extract_info(job["url"], download=True)
+                        prep_file = fb_ydl.prepare_filename(down_info)
                 else:
-                    base, _ = os.path.splitext(prep_file)
-                    potential = f"{base}.{merge_fmt}"
-                    final_file = potential if os.path.exists(potential) else prep_file
+                    raise dl_err
 
-                if is_gif:
-                    job["status"] = "converting"
-                    self.notify_job_update(job)
-                    final_file = self.converter.video_to_gif(
-                        final_file,
-                        fps=job.get("fps") or 15,
-                        scale_width=job.get("scale_width") or 480,
-                        start_time=job.get("start_time"),
-                        duration=job.get("duration"),
-                        speed=job.get("speed") or 1.0
-                    )
-                elif media_type == "image":
-                    job["status"] = "converting"
-                    self.notify_job_update(job)
-                    final_file = self.converter.extract_frame_image(
-                        final_file,
-                        target_format=target_fmt if target_fmt in ["jpg", "png", "webp"] else "jpg",
-                        timestamp=job.get("start_time") or 1.0
-                    )
-                return final_file
+            if os.path.exists(prep_file):
+                final_file = prep_file
+            else:
+                base, _ = os.path.splitext(prep_file)
+                potential = f"{base}.{merge_fmt}"
+                final_file = potential if os.path.exists(potential) else prep_file
+
+            if is_gif:
+                job["status"] = "converting"
+                self.notify_job_update(job)
+                final_file = self.converter.video_to_gif(
+                    final_file,
+                    fps=job.get("fps") or 15,
+                    scale_width=job.get("scale_width") or 480,
+                    start_time=job.get("start_time"),
+                    duration=job.get("duration"),
+                    speed=job.get("speed") or 1.0
+                )
+            elif media_type == "image":
+                job["status"] = "converting"
+                self.notify_job_update(job)
+                final_file = self.converter.extract_frame_image(
+                    final_file,
+                    target_format=target_fmt if target_fmt in ["jpg", "png", "webp"] else "jpg",
+                    timestamp=job.get("start_time") or 1.0
+                )
+
+            return final_file
 
 
 queue_manager = QueueManager()

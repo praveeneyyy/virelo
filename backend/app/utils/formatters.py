@@ -34,8 +34,8 @@ def clean_ansi(text: str) -> str:
     """
     if not text:
         return ""
-    # Strip ANSI escape sequences: \x1b[..., \033[..., or bare [0;31m
-    text = re.sub(r'(?:\x1b|\033|\u001b)?\[[0-9;]*[a-zA-Z]', '', text)
+    # Strip ANSI escape sequences: \x1b[..., \033[...
+    text = re.sub(r'(?:\x1b|\033|\u001b)\[[0-9;]*[a-zA-Z]', '', text)
     # Strip control characters
     text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
     # Remove leading ERROR: if duplicated

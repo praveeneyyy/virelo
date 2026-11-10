@@ -160,7 +160,7 @@ class MediaExtractor:
         if direct_info:
             return direct_info
 
-        # 2. Extract with yt-dlp
+        # 2. Extract with yt-dlp (Primary attempt: standard client for highest resolution)
         opts = self._base_opts()
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -175,6 +175,26 @@ class MediaExtractor:
                     return self._format_ytdlp_info(info, url)
         except Exception as yt_err:
             clean_err = clean_ansi(str(yt_err))
+
+            # 2b. Resilient client fallback for YouTube (e.g. cloud datacenter IPs)
+            if ('youtube.com' in url.lower() or 'youtu.be' in url.lower()) and any(
+                t in clean_err.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
+            ):
+                try:
+                    fallback_opts = dict(opts)
+                    fallback_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
+                    with yt_dlp.YoutubeDL(fallback_opts) as fb_ydl:
+                        fb_info = fb_ydl.extract_info(url, download=False)
+                        if fb_info:
+                            if 'entries' in fb_info and fb_info['entries']:
+                                entries = [e for e in fb_info['entries'] if e]
+                                first = entries[0] if entries else fb_info
+                                first['is_playlist'] = True
+                                first['playlist_count'] = len(entries)
+                                return self._format_ytdlp_info(first, url)
+                            return self._format_ytdlp_info(fb_info, url)
+                except Exception as fb_err:
+                    clean_err = clean_ansi(str(fb_err))
             # 3. Fallback for Pinterest Pin image
             if 'pinterest' in url.lower() or 'pin.it' in url.lower():
                 pin = self._extract_pinterest_pin(url)

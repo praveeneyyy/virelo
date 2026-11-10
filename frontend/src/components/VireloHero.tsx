@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Link2, 
-  Play, 
-  Check, 
-  Download, 
-  Music, 
+import {
+  Link2,
+  Play,
+  Check,
+  Download,
+  Music,
   Film,
   Sparkles,
   ArrowRight,
@@ -31,16 +31,16 @@ import {
 } from 'lucide-react';
 import { MediaInfo, DownloadPayload, DownloadJob, ViewTab, MediaType } from '../types';
 import { getFileDownloadUrl, openDownloadsFolder } from '../services/api';
-import { 
-  YouTubeIcon, 
-  InstagramIcon, 
-  TikTokIcon, 
-  PinterestIcon, 
-  FacebookIcon, 
-  XTwitterIcon, 
-  RedditIcon, 
-  VimeoIcon, 
-  TwitchIcon, 
+import {
+  YouTubeIcon,
+  InstagramIcon,
+  TikTokIcon,
+  PinterestIcon,
+  FacebookIcon,
+  XTwitterIcon,
+  RedditIcon,
+  VimeoIcon,
+  TwitchIcon,
   SoundCloudIcon,
   BrowserIcon,
   ChromeIcon
@@ -206,10 +206,10 @@ export const VireloHero: React.FC<HeroProps> = ({
 
   return (
     <div className="w-full space-y-10 pt-2 pb-12">
-      
+
       {/* 1. Precision Editorial Hero Headline (Billion-Dollar Company Standard) */}
       <div className="space-y-4 text-center max-w-3xl mx-auto pt-4 sm:pt-6">
-        
+
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 border border-purple-200/80 text-xs font-semibold uppercase tracking-wider text-purple-700 shadow-xs">
           <span className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
@@ -219,7 +219,7 @@ export const VireloHero: React.FC<HeroProps> = ({
         {/* Headline & Description specified by prompt */}
         <div className="space-y-3">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-center leading-[1.15] text-slate-900 max-w-4xl mx-auto">
-            Everything you love.{' '}
+            Everything you love.
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 font-serif italic font-normal tracking-normal">
               One download away.
             </span>
@@ -234,7 +234,7 @@ export const VireloHero: React.FC<HeroProps> = ({
       <div className="max-w-3xl mx-auto space-y-3">
         <form onSubmit={handleSubmit} className="relative">
           <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-purple-500/5 hover:border-purple-300 focus-within:border-purple-600 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all">
-            
+
             <div className="flex items-center gap-3 pl-3 flex-1 min-w-0">
               <Link2 size={20} className="text-slate-400 shrink-0" />
               <input
@@ -245,7 +245,7 @@ export const VireloHero: React.FC<HeroProps> = ({
                 placeholder="Paste your media URL here..."
                 className="w-full h-12 bg-transparent text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:outline-none font-medium"
               />
-              
+
               {url.trim() && (
                 <button
                   type="button"
@@ -310,7 +310,7 @@ export const VireloHero: React.FC<HeroProps> = ({
       {/* 3. Platform Badges + Browser Web Link Icon */}
       <div className="max-w-3xl mx-auto space-y-3">
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
-          
+
           <button
             type="button"
             onClick={() => handlePlatformClick('YouTube')}
@@ -399,10 +399,10 @@ export const VireloHero: React.FC<HeroProps> = ({
       {/* 4. Complete Conversion Workspace & Editing Suite */}
       {mediaInfo && (
         <div className="max-w-3xl mx-auto p-5 sm:p-7 rounded-3xl bg-white border border-slate-200/90 shadow-xl shadow-purple-500/5 space-y-6">
-          
+
           {/* Header Preview Strip */}
           <div className="flex flex-col sm:flex-row gap-4 items-start border-b border-slate-100 pb-5">
-            
+
             {/* Thumbnail */}
             <div className="relative w-full sm:w-48 h-28 sm:h-32 bg-black shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-xs">
               <img
@@ -444,11 +444,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMode('video')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
-                    activeMode === 'video'
-                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'video'
+                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
                 >
                   <Film size={14} />
                   <span>Video</span>
@@ -457,11 +456,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMode('audio')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
-                    activeMode === 'audio'
-                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'audio'
+                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
                 >
                   <Music size={14} />
                   <span>Audio</span>
@@ -470,11 +468,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMode('gif')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
-                    activeMode === 'gif'
-                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'gif'
+                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
                 >
                   <Scissors size={14} />
                   <span>GIF / Clip Tool</span>
@@ -483,11 +480,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMode('image')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${
-                    activeMode === 'image'
-                      ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
-                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border flex items-center gap-1.5 ${activeMode === 'image'
+                    ? 'border-purple-600 bg-purple-600 text-white font-semibold shadow-xs'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                    }`}
                 >
                   <ImageIcon size={14} />
                   <span>Frame Capture</span>
@@ -512,11 +508,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                       key={fmt}
                       type="button"
                       onClick={() => setSelectedVideoFormat(fmt)}
-                      className={`p-2 border text-center uppercase text-xs font-mono font-bold transition-colors cursor-pointer ${
-                        selectedVideoFormat === fmt
-                          ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
-                          : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
+                      className={`p-2 border text-center uppercase text-xs font-mono font-bold transition-colors cursor-pointer ${selectedVideoFormat === fmt
+                        ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
+                        : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        }`}
                     >
                       {fmt}
                     </button>
@@ -542,11 +537,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                         key={item.res}
                         type="button"
                         onClick={() => setSelectedQuality(item.res)}
-                        className={`p-2.5 border text-left transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold'
-                            : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                        }`}
+                        className={`p-2.5 border text-left transition-colors cursor-pointer ${isSelected
+                          ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold'
+                          : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          }`}
                       >
                         <div className="text-xs font-bold">{item.label}</div>
                         <div className="text-[10px] font-mono text-[var(--text-muted)] mt-0.5">{item.res}p transcode</div>
@@ -580,11 +574,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                       key={item.fmt}
                       type="button"
                       onClick={() => setSelectedAudioFormat(item.fmt)}
-                      className={`p-2.5 border text-left transition-colors cursor-pointer ${
-                        selectedAudioFormat === item.fmt
-                          ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold'
-                          : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
+                      className={`p-2.5 border text-left transition-colors cursor-pointer ${selectedAudioFormat === item.fmt
+                        ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-semibold'
+                        : 'border-[var(--border-color)] bg-[var(--surface-secondary)] hover:border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        }`}
                     >
                       <div className="text-xs font-bold uppercase font-mono">{item.fmt}</div>
                       <div className="text-[10px] text-[var(--text-muted)] mt-0.5">{item.desc}</div>
@@ -609,11 +602,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                       key={item.rate}
                       type="button"
                       onClick={() => setAudioBitrate(item.rate)}
-                      className={`p-2 border text-center font-mono text-xs transition-colors cursor-pointer ${
-                        audioBitrate === item.rate
-                          ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-bold'
-                          : 'border-[var(--border-color)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
+                      className={`p-2 border text-center font-mono text-xs transition-colors cursor-pointer ${audioBitrate === item.rate
+                        ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)] font-bold'
+                        : 'border-[var(--border-color)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        }`}
                     >
                       {item.label}
                     </button>
@@ -626,7 +618,7 @@ export const VireloHero: React.FC<HeroProps> = ({
           {/* 4C. GIF / CLIP MAKER EDITING TOOL */}
           {activeMode === 'gif' && (
             <div className="p-4 bg-[var(--surface-secondary)] border border-[var(--border-color)] space-y-4">
-              
+
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                 <div className="flex items-center gap-2">
                   <Scissors size={16} className="text-[var(--accent)]" />
@@ -641,7 +633,7 @@ export const VireloHero: React.FC<HeroProps> = ({
 
               {/* Timecode Range Selector */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* Start Time */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-mono">
@@ -704,7 +696,7 @@ export const VireloHero: React.FC<HeroProps> = ({
 
               {/* Resolution, Framerate & Playback Speed */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-[var(--border-color)]">
-                
+
                 {/* Resolution / Width */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase">GIF Resolution</label>
@@ -768,7 +760,7 @@ export const VireloHero: React.FC<HeroProps> = ({
           {/* 4D. IMAGE FRAME CAPTURE CONTROLS */}
           {activeMode === 'image' && (
             <div className="p-4 bg-[var(--surface-secondary)] border border-[var(--border-color)] space-y-4">
-              
+
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                 <div className="flex items-center gap-2">
                   <ImageIcon size={16} className="text-[var(--accent)]" />
@@ -779,7 +771,7 @@ export const VireloHero: React.FC<HeroProps> = ({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* Image Format */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-mono text-[var(--text-secondary)] uppercase">Image Container</label>
@@ -789,11 +781,10 @@ export const VireloHero: React.FC<HeroProps> = ({
                         key={fmt}
                         type="button"
                         onClick={() => setSelectedImageFormat(fmt)}
-                        className={`p-2 border text-center font-mono text-xs font-bold uppercase transition-colors cursor-pointer ${
-                          selectedImageFormat === fmt
-                            ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
-                            : 'border-[var(--border-color)] bg-[var(--surface-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                        }`}
+                        className={`p-2 border text-center font-mono text-xs font-bold uppercase transition-colors cursor-pointer ${selectedImageFormat === fmt
+                          ? 'border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]'
+                          : 'border-[var(--border-color)] bg-[var(--surface-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                          }`}
                       >
                         {fmt}
                       </button>
@@ -927,7 +918,7 @@ export const VireloHero: React.FC<HeroProps> = ({
       {/* 6. Rounded Metrics Row */}
       <div className="max-w-3xl mx-auto pt-2">
         <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
-          
+
           <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
             <div className="text-xl sm:text-2xl font-black font-mono text-slate-900">
               1000+
@@ -961,7 +952,7 @@ export const VireloHero: React.FC<HeroProps> = ({
       {/* 7. Rounded 6-Feature Architecture Highlights */}
       <div className="max-w-3xl mx-auto">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          
+
           <div className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
               <Globe2 size={15} className="text-purple-600" />
