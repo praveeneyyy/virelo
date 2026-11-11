@@ -2,6 +2,7 @@
 FastAPI REST API and WebSocket endpoints for VIRELO.
 """
 import os
+import re
 import sys
 import subprocess
 import shutil
@@ -132,13 +133,13 @@ def serve_download_file(job_id: str):
         raise HTTPException(status_code=403, detail="File path violation.")
 
     filename = job.get("file_name") or os.path.basename(file_path)
-    encoded_filename = urllib.parse.quote(filename)
+    safe_ascii = re.sub(r'[^\x20-\x7e]', '_', filename).replace('"', '_')
+    encoded_filename = urllib.parse.quote(filename, encoding='utf-8')
     headers = {
-        "Content-Disposition": f'attachment; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}'
+        "Content-Disposition": f'attachment; filename="{safe_ascii}"; filename*=UTF-8\'\'{encoded_filename}'
     }
     return FileResponse(
         path=file_path,
-        filename=filename,
         headers=headers,
         media_type="application/octet-stream"
     )
