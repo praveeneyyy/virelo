@@ -67,6 +67,10 @@ backend/data/*.sqlite3
 .env.local
 .env.*.local
 !.env.example
+*cookies*.txt
+cookies.txt
+backend/data/*.txt
+backend/app/data/
 
 # IDE & OS Generated Files
 .DS_Store

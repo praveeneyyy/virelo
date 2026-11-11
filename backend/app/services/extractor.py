@@ -157,13 +157,14 @@ class MediaExtractor:
                 return youtube_service.extract(url)
             except YouTubeError as yt_err:
                 code_str = yt_err.code.value if hasattr(yt_err.code, 'value') else str(yt_err.code)
-                print(f"[YouTube Extraction Diagnostic] Code: {code_str} | Message: {yt_err.message}")
-                raise ValueError(f"[{code_str}] {yt_err.message}")
+                raw_snippet = f" (Details: {yt_err.raw_error[:200]})" if yt_err.raw_error else ""
+                print(f"[YouTube Extraction Diagnostic] Code: {code_str} | Message: {yt_err.message} | Raw: {yt_err.raw_error[:200]}")
+                raise ValueError(f"[{code_str}] {yt_err.message}{raw_snippet}")
             except Exception as exc:
                 clean_err = clean_ansi(str(exc))
                 code, user_msg = classify_youtube_error(clean_err)
                 print(f"[YouTube Extraction Diagnostic] Code: {code} | Error: {clean_err[:200]}")
-                raise ValueError(f"[{code}] {user_msg}")
+                raise ValueError(f"[{code}] {user_msg} (Details: {clean_err[:200]})")
 
         # 2. Fast check if direct file URL
         direct_info = self._probe_direct_file(url)

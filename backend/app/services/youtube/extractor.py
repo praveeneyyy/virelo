@@ -75,32 +75,30 @@ class YouTubeExtractor:
             last_clean_err = clean_ansi(str(exc))
 
         # 3. Resilient fallback attempt (visionos + tv_samsung secondary profile)
-        fallback_triggers = [
-            "bot", "challenge", "sign in", "po_token", "gvs",
-            "403", "format is not available", "playabilitystatus"
-        ]
-        if any(t in last_clean_err.lower() for t in fallback_triggers):
-            try:
-                fallback_opts = self._build_ytdlp_opts(player_clients=YOUTUBE_FALLBACK_CLIENTS)
-                with yt_dlp.YoutubeDL(fallback_opts) as fb_ydl:
-                    fb_info = fb_ydl.extract_info(canonical_url, download=False)
-                    if fb_info:
-                        circuit_breaker.record_success(video_id)
-                        return format_youtube_metadata(fb_info, canonical_url)
-            except Exception as fb_exc:
-                last_clean_err = clean_ansi(str(fb_exc))
+        try:
+            fallback_opts = self._build_ytdlp_opts(player_clients=YOUTUBE_FALLBACK_CLIENTS)
+            with yt_dlp.YoutubeDL(fallback_opts) as fb_ydl:
+                fb_info = fb_ydl.extract_info(canonical_url, download=False)
+                if fb_info:
+                    circuit_breaker.record_success(video_id)
+                    return format_youtube_metadata(fb_info, canonical_url)
+        except Exception as fb_exc:
+            last_clean_err = clean_ansi(str(fb_exc)) or last_clean_err
 
         # 4. Classify error and update circuit breaker
         code, user_msg = classify_youtube_error(last_clean_err)
         circuit_breaker.record_failure(video_id, code)
 
-        # 5. Legitimate metadata recovery: if stream extraction is restricted on cloud IPs,
-        # fetch official metadata via YouTube oEmbed so users receive genuine title, author, and preview
-        if code in (YouTubeErrorCode.CLOUD_IP_RESTRICTED, YouTubeErrorCode.CHALLENGE_REQUIRED) and video_id:
+        # 5. Legitimate metadata recovery: if stream extraction is restricted or blocked on cloud hosting,
+        # fetch official public metadata via YouTube oEmbed so users receive genuine title, author, and preview
+        if video_id and code != YouTubeErrorCode.INVALID_URL:
             oembed_info = self._fetch_oembed_metadata(video_id, canonical_url)
             if oembed_info:
                 oembed_info["restriction_code"] = code.value
-                oembed_info["restriction_notice"] = user_msg
+                oembed_info["restriction_notice"] = (
+                    user_msg if code in (YouTubeErrorCode.CLOUD_IP_RESTRICTED, YouTubeErrorCode.CHALLENGE_REQUIRED)
+                    else "YouTube is currently restricting automated stream queries from our hosting environment. You can use an available alternative or run locally."
+                )
                 return oembed_info
 
         raise YouTubeError(
