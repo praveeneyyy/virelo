@@ -971,7 +971,7 @@ export const VireloHero: React.FC<HeroProps> = ({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
                     <CheckCircle2 size={18} className="text-emerald-600" />
-                    <span>Transcoded & Saved to Local Folder!</span>
+                    <span>Download Ready — Saved to Downloads!</span>
                   </div>
                   <p className="text-xs font-mono text-emerald-700 truncate max-w-md">
                     {activeJob.file_name || 'Downloaded media file'} ({activeJob.file_size_str || 'Ready'})
@@ -979,23 +979,26 @@ export const VireloHero: React.FC<HeroProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={handleOpenFolder}
-                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-emerald-300 text-xs font-semibold text-slate-800 flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
-                    title="Open local downloads folder in Windows Explorer / File Manager"
-                  >
-                    <Folder size={14} className="text-purple-600" />
-                    <span>Open Folder</span>
-                  </button>
+                  {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                    <button
+                      type="button"
+                      onClick={handleOpenFolder}
+                      className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-emerald-300 text-xs font-semibold text-slate-800 flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
+                      title="Open local downloads folder in Windows Explorer"
+                    >
+                      <Folder size={14} className="text-purple-600" />
+                      <span>Open Folder</span>
+                    </button>
+                  )}
 
                   <a
                     href={getFileDownloadUrl(activeJob.id)}
                     download={activeJob.file_name || 'download'}
-                    className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm"
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer"
+                    title="Save file directly to your Downloads folder"
                   >
-                    <Download size={14} />
-                    <span>Save Again</span>
+                    <Download size={15} />
+                    <span>Save to Downloads</span>
                   </a>
                 </div>
               </div>

@@ -515,10 +515,10 @@ export const DownloaderView: React.FC<DownloaderProps> = ({
               </span>
               <a
                 href={getFileDownloadUrl(activeJob.id)}
-                download
+                download={activeJob.file_name || 'download'}
                 className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-semibold text-xs transition-colors shadow-sm"
               >
-                Save File to Disk
+                Save to Downloads
               </a>
             </div>
           )}

@@ -175,10 +175,10 @@ export const QueueView: React.FC<QueueProps> = ({ jobs, onNavigate, onRefresh })
                     {job.status === 'completed' && (
                       <a
                         href={getFileDownloadUrl(job.id)}
-                        download
+                        download={job.file_name || 'download'}
                         className="px-3.5 py-1.5 rounded-xl bg-[#ff2b6d] hover:bg-[#e11d59] text-white font-bold text-xs shadow-sm transition-all"
                       >
-                        Save to Disk
+                        Save to Downloads
                       </a>
                     )}
 

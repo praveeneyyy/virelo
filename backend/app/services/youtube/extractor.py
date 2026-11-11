@@ -2,6 +2,7 @@
 VIRELO YouTube Service - Extractor Engine.
 Configures and runs yt-dlp specifically for high-fidelity YouTube stream discovery.
 """
+import os
 import json
 import urllib.request
 from typing import Dict, Any, Optional
@@ -93,14 +94,14 @@ class YouTubeExtractor:
         # If cloud hosting datacenter IP (AWS/Render) is blocked by YouTube BotGuard,
         # seamlessly query the residential upstream worker to retrieve the full 4K stream formats.
         upstream_worker = os.getenv("RESIDENTIAL_WORKER_URL", "https://accordance-learners-transmission-drinking.trycloudflare.com")
-        if upstream_worker and upstream_worker.startswith("http"):
+        if upstream_worker and upstream_worker.startswith("http") and not os.getenv("IS_RESIDENTIAL_WORKER"):
             try:
                 up_req = urllib.request.Request(
                     f"{upstream_worker.rstrip('/')}/api/extract",
                     data=json.dumps({"url": canonical_url}).encode("utf-8"),
-                    headers={"Content-Type": "application/json", "User-Agent": "VireloCloudCluster/1.0"}
+                    headers={"Content-Type": "application/json", "User-Agent": "VireloCloudCluster/1.0", "X-Virelo-Worker": "residential"}
                 )
-                with urllib.request.urlopen(up_req, timeout=12) as up_resp:
+                with urllib.request.urlopen(up_req, timeout=15) as up_resp:
                     up_data = json.loads(up_resp.read().decode("utf-8"))
                     if up_data.get("formats") and len(up_data["formats"]) > 0:
                         circuit_breaker.record_success(video_id)
