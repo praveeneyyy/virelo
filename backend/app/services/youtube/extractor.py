@@ -89,6 +89,25 @@ class YouTubeExtractor:
         code, user_msg = classify_youtube_error(last_clean_err)
         circuit_breaker.record_failure(video_id, code)
 
+        # 4b. Distributed Residential Worker Fallback
+        # If cloud hosting datacenter IP (AWS/Render) is blocked by YouTube BotGuard,
+        # seamlessly query the residential upstream worker to retrieve the full 4K stream formats.
+        upstream_worker = os.getenv("RESIDENTIAL_WORKER_URL", "https://accordance-learners-transmission-drinking.trycloudflare.com")
+        if upstream_worker and upstream_worker.startswith("http"):
+            try:
+                up_req = urllib.request.Request(
+                    f"{upstream_worker.rstrip('/')}/api/extract",
+                    data=json.dumps({"url": canonical_url}).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "User-Agent": "VireloCloudCluster/1.0"}
+                )
+                with urllib.request.urlopen(up_req, timeout=12) as up_resp:
+                    up_data = json.loads(up_resp.read().decode("utf-8"))
+                    if up_data.get("formats") and len(up_data["formats"]) > 0:
+                        circuit_breaker.record_success(video_id)
+                        return up_data
+            except Exception as up_exc:
+                print(f"[Residential Worker Fallback Diagnostic] Upstream call failed: {up_exc}")
+
         # 5. Legitimate metadata recovery: if stream extraction is restricted or blocked on cloud hosting,
         # fetch official public metadata via YouTube oEmbed so users receive genuine title, author, and preview
         if video_id and code != YouTubeErrorCode.INVALID_URL:

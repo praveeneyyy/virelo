@@ -6,6 +6,8 @@ and real-time WebSocket state broadcasting.
 import os
 import re
 import time
+import json
+import urllib.request
 import uuid
 import asyncio
 import threading
@@ -228,9 +230,16 @@ class QueueManager:
                     elif media_type == "video":
                         final_file = self.converter.transcode_video(downloaded_file, target_format)
 
-            # 4. Handle Specialized YouTube Service
+            # 4. Handle Specialized YouTube Service (with Residential Node Fallback)
             elif youtube_service.is_youtube_url(url):
-                final_file = youtube_service.download(job, progress_hook=progress_hook, cancel_token=cancel_token)
+                try:
+                    final_file = youtube_service.download(job, progress_hook=progress_hook, cancel_token=cancel_token)
+                except Exception as yt_err:
+                    upstream_worker = os.getenv("RESIDENTIAL_WORKER_URL", "https://accordance-learners-transmission-drinking.trycloudflare.com")
+                    if upstream_worker and upstream_worker.startswith("http"):
+                        final_file = self._download_via_upstream(job, upstream_worker, cancel_token)
+                    else:
+                        raise yt_err
 
             # 5. Handle Universal Streaming Platforms (yt-dlp)
             else:
@@ -435,6 +444,59 @@ class QueueManager:
                 )
 
             return final_file
+
+    def _download_via_upstream(self, job: Dict[str, Any], upstream_url: str, cancel_token: Optional[threading.Event] = None) -> str:
+        """
+        Delegates media download and FFmpeg multiplexing to the residential upstream worker.
+        Transfers the resulting media file back to local storage upon completion.
+        """
+        import shutil
+
+        # 1. Enqueue job on upstream residential node
+        post_data = {
+            "url": job["url"],
+            "media_type": job.get("media_type", "video"),
+            "target_format": job.get("target_format", "mp4"),
+            "target_quality": job.get("target_quality", "best"),
+            "target_bitrate": job.get("target_bitrate", "320"),
+        }
+        req = urllib.request.Request(
+            f"{upstream_url.rstrip('/')}/api/download",
+            data=json.dumps(post_data).encode("utf-8"),
+            headers={"Content-Type": "application/json", "User-Agent": "VireloCloudCluster/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            up_job = json.loads(resp.read().decode("utf-8"))
+            up_id = up_job["id"]
+
+        # 2. Poll upstream until completed (up to 5 minutes)
+        for _ in range(150):
+            if cancel_token and cancel_token.is_set():
+                raise InterruptedError("Download cancelled by user.")
+            time.sleep(2)
+            try:
+                poll_req = urllib.request.Request(f"{upstream_url.rstrip('/')}/api/download/{up_id}")
+                with urllib.request.urlopen(poll_req, timeout=10) as p_resp:
+                    j_status = json.loads(p_resp.read().decode("utf-8"))
+                    job["progress"] = j_status.get("progress", 0.0)
+                    job["speed_str"] = j_status.get("speed_str", "--")
+                    job["eta_str"] = j_status.get("eta_str", "--")
+                    self.notify_job_update(job)
+
+                    if j_status.get("status") == "completed":
+                        # Stream the finished file from upstream node into local storage
+                        target_file = os.path.join(self.downloads_path, j_status.get("file_name", f"media_{up_id}.mp4"))
+                        file_url = f"{upstream_url.rstrip('/')}/api/download/{up_id}/file"
+                        with urllib.request.urlopen(file_url, timeout=120) as f_resp, open(target_file, "wb") as out_f:
+                            shutil.copyfileobj(f_resp, out_f)
+                        return target_file
+                    elif j_status.get("status") == "failed":
+                        raise RuntimeError(j_status.get("error", "Upstream processing encountered an error."))
+            except Exception as poll_err:
+                if "failed" in str(poll_err).lower() or "error" in str(poll_err).lower():
+                    raise poll_err
+
+        raise TimeoutError("Upstream download operation timed out.")
 
 
 queue_manager = QueueManager()
