@@ -96,26 +96,28 @@ def extract_available_qualities(raw_formats: List[Dict[str, Any]]) -> List[int]:
 def build_video_format_spec(target_quality: str) -> str:
     """
     Builds dynamic yt-dlp format selector string based on desired resolution.
+    Strictly prioritizes unthrottled direct HTTPS streams over throttled HLS (m3u8) streams.
     Never hardcodes format IDs.
-    Examples:
-      - 'best' -> 'bestvideo+bestaudio/best'
-      - '1080' -> 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best'
     """
     q_str = str(target_quality).lower().strip()
     if q_str in ["best", "highest", "max", "auto", "original"]:
-        return "bestvideo+bestaudio/best"
+        return "bestvideo[protocol^=http]+bestaudio[protocol^=http]/bestvideo+bestaudio/best"
 
     digits = re.findall(r'\d+', q_str)
     if digits:
         h = int(digits[0])
-        return f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/bestvideo+bestaudio/best"
+        return (
+            f"bestvideo[height<={h}][protocol^=http]+bestaudio[protocol^=http]/"
+            f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+        )
 
-    return "bestvideo+bestaudio/best"
+    return "bestvideo[protocol^=http]+bestaudio[protocol^=http]/bestvideo+bestaudio/best"
 
 
 def build_audio_format_spec() -> str:
     """
     Builds dynamic yt-dlp format selector for audio stream extraction.
+    Prioritizes direct unthrottled HTTPS audio streams.
     """
-    return "bestaudio/bestvideo+bestaudio/best"
+    return "bestaudio[protocol^=http]/bestaudio/best"
 

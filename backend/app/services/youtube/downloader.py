@@ -121,6 +121,10 @@ class YouTubeDownloader:
             'ignoreerrors': False,
             'format': format_spec,
             'merge_output_format': merge_fmt,
+            'concurrent_fragment_downloads': 4,
+            'buffersize': 1024 * 1024,
+            'retries': 5,
+            'fragment_retries': 5,
             'extractor_args': {'youtube': {'player_client': YOUTUBE_PRIMARY_CLIENTS}},
         }
         if progress_hook:

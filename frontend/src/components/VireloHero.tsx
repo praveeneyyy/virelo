@@ -84,6 +84,20 @@ export const VireloHero: React.FC<HeroProps> = ({
   const [selectedQuality, setSelectedQuality] = useState('1080');
   const [selectedVideoFormat, setSelectedVideoFormat] = useState('mp4');
 
+  // Auto-select best native resolution when media is loaded
+  useEffect(() => {
+    if (mediaInfo?.available_qualities && mediaInfo.available_qualities.length > 0) {
+      const nativeStr = mediaInfo.available_qualities.map(String);
+      if (nativeStr.includes('1080')) {
+        setSelectedQuality('1080');
+      } else if (nativeStr.includes('2160')) {
+        setSelectedQuality('2160');
+      } else {
+        setSelectedQuality(nativeStr[0]);
+      }
+    }
+  }, [mediaInfo]);
+
   // Audio settings
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('mp3');
   const [audioBitrate, setAudioBitrate] = useState('320');
@@ -619,6 +633,9 @@ export const VireloHero: React.FC<HeroProps> = ({
                     { label: '720p HD', res: '720' },
                   ].map((item) => {
                     const isSelected = selectedQuality === item.res;
+                    const isNative = mediaInfo?.available_qualities
+                      ? mediaInfo.available_qualities.some((q) => q >= parseInt(item.res))
+                      : true;
                     return (
                       <button
                         key={item.res}
@@ -630,7 +647,9 @@ export const VireloHero: React.FC<HeroProps> = ({
                           }`}
                       >
                         <div className="text-xs font-bold">{item.label}</div>
-                        <div className="text-[10px] font-mono text-[var(--text-muted)] mt-0.5">{item.res}p transcode</div>
+                        <div className="text-[10px] font-mono text-[var(--text-muted)] mt-0.5">
+                          {item.res}p {isNative ? 'Fast Direct' : 'High-Res'}
+                        </div>
                       </button>
                     );
                   })}

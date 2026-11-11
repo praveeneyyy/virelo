@@ -176,33 +176,54 @@ class QueueManager:
             if cancel_token and cancel_token.is_set():
                 raise InterruptedError("Download cancelled.")
 
-            # 2. Progress reporting hook
+            # 2. Progress reporting hook with multi-stream weighting
+            seen_files = set()
             def progress_hook(d: Dict[str, Any]):
                 if cancel_token and cancel_token.is_set():
                     raise InterruptedError("Download cancelled.")
 
                 status = d.get("status")
+                fn = d.get("filename", "")
+                if fn:
+                    seen_files.add(fn)
+                is_secondary = len(seen_files) > 1
+
                 if status == "downloading":
                     total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
                     downloaded = d.get("downloaded_bytes", 0)
-                    pct = round((downloaded / total * 100), 1) if total > 0 else d.get("percent", 0.0)
+                    raw_pct = (downloaded / total * 100) if total > 0 else d.get("percent", 0.0)
+
+                    if is_secondary:
+                        # Audio track: mapped smoothly between 75% and 92%
+                        pct = round(75.0 + (raw_pct * 0.17), 1)
+                    else:
+                        # Video track: mapped smoothly between 5% and 75%
+                        pct = round(max(5.0, raw_pct * 0.75), 1)
+
                     speed = d.get("speed") or 0
                     eta = d.get("eta") or 0
 
                     job.update({
-                        "progress": pct,
+                        "progress": max(job.get("progress", 0.0), pct),
                         "downloaded_bytes": downloaded,
                         "total_bytes": total,
-                        "speed_str": f"{format_bytes(speed)}/s" if speed else "0 B/s",
+                        "speed_str": f"{format_bytes(speed)}/s" if speed else "Negotiating stream...",
                         "eta_str": f"{eta}s" if eta else "--",
                     })
                     self.notify_job_update(job)
                 elif status == "finished":
-                    job.update({
-                        "progress": 99.0,
-                        "speed_str": "Finishing...",
-                        "eta_str": "0s",
-                    })
+                    if is_secondary:
+                        job.update({
+                            "progress": 95.0,
+                            "speed_str": "Multiplexing media...",
+                            "eta_str": "Finishing",
+                        })
+                    else:
+                        job.update({
+                            "progress": 75.0,
+                            "speed_str": "Connecting audio...",
+                            "eta_str": "--",
+                        })
                     self.notify_job_update(job)
 
             # 3. Handle Direct File Download

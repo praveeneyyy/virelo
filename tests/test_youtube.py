@@ -204,19 +204,19 @@ class TestYouTubeDynamicFormats(unittest.TestCase):
         self.assertFalse(audio_entry["is_video"])
 
     def test_build_video_format_spec(self):
-        self.assertEqual(build_video_format_spec("best"), "bestvideo+bestaudio/best")
-        self.assertEqual(build_video_format_spec("max"), "bestvideo+bestaudio/best")
+        self.assertEqual(build_video_format_spec("best"), "bestvideo[protocol^=http]+bestaudio[protocol^=http]/bestvideo+bestaudio/best")
+        self.assertEqual(build_video_format_spec("max"), "bestvideo[protocol^=http]+bestaudio[protocol^=http]/bestvideo+bestaudio/best")
         self.assertEqual(
             build_video_format_spec("1080p"),
-            "bestvideo[height<=1080]+bestaudio/best[height<=1080]/bestvideo+bestaudio/best"
+            "bestvideo[height<=1080][protocol^=http]+bestaudio[protocol^=http]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
         )
         self.assertEqual(
             build_video_format_spec("720"),
-            "bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best"
+            "bestvideo[height<=720][protocol^=http]+bestaudio[protocol^=http]/bestvideo[height<=720]+bestaudio/best[height<=720]/best"
         )
 
     def test_build_audio_format_spec(self):
-        self.assertEqual(build_audio_format_spec(), "bestaudio/bestvideo+bestaudio/best")
+        self.assertEqual(build_audio_format_spec(), "bestaudio[protocol^=http]/bestaudio/best")
 
 
 class TestYouTubeCircuitBreaker(unittest.TestCase):
