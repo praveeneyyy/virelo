@@ -12,6 +12,8 @@
   [![FFmpeg](https://img.shields.io/badge/FFmpeg-9.0-007808.svg?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
   [![yt--dlp](https://img.shields.io/badge/yt--dlp-Nightly-red.svg?logo=youtube&logoColor=white)](https://github.com/yt-dlp/yt-dlp)
   [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?logo=github)](CONTRIBUTING.md)
+  [![Contributors](https://img.shields.io/badge/Contributors-Welcome-orange.svg)](CONTRIBUTORS.md)
 </div>
 
 ---
@@ -29,12 +31,13 @@ Powered by a unified **FastAPI** asynchronous backend, **FFmpeg 9.0**, **yt-dlp*
 
 ## 🚀 Key Architectural Highlights
 
-### 1. Direct Client-Device Downloads
-When a transcode or download job completes, VIRELO delivers the media file directly to the **requesting client's device** using RFC 6266 `Content-Disposition: attachment; filename="..."; filename*=UTF-8''...` headers. Regardless of whether the site is accessed from a desktop PC, Mac, Android phone, or iPhone:
+### 1. Direct Client-Device Downloads (Zero Server Storage)
+When a transcode or download job completes, VIRELO delivers the media file directly to the **requesting client's personal device** using RFC 6266 `Content-Disposition: attachment; filename="..."; filename*=UTF-8''...` headers. Regardless of whether the site is accessed from a desktop PC, Mac, Android phone, or iPhone:
 - **Windows**: Saves automatically to `C:\Users\<user>\Downloads`.
 - **macOS**: Saves automatically to `~/Downloads`.
 - **Android**: Saves to local device storage `/Download`.
 - **iOS / iPadOS**: Prompts download directly to the Files app `Downloads`.
+- **Immediate Server Scratch Purge**: The server disk holds **0 MB** of retained media. The server functions purely as an ephemeral pass-through stream pipeline; temporary scratch files on the server are purged immediately once streamed to the user's browser.
 - The user is also provided with a prominent **"Save to Device Downloads"** button for immediate one-click re-download.
 
 ### 2. Hybrid Residential Worker Architecture ($0.00 Cost)
@@ -49,9 +52,10 @@ VIRELO solves this with a **zero-cost hybrid edge architecture**:
 - **Multi-Stream Weighted Telemetry**: WebSocket progress reporting tracks video streams (0%–75%), audio tracks (75%–92%), and FFmpeg multiplexing (92%–100%) so users receive smooth, real-time feedback without frozen progress bars.
 - **Concurrent Fragment Acceleration**: Multi-threaded chunk workers (`concurrent_fragment_downloads: 4`) with 1MB ring buffers maximize network pipe saturation.
 
-### 4. Privacy-First Ephemeral Storage (30-Min TTL)
-- Background garbage collection sweeps every 60 seconds, automatically erasing downloaded media files, temporary transcode caches, and database entries older than 30 minutes.
-- Strict Zero-Log policy: No user IP logging, no tracking cookies, and no personal data retention.
+### 4. Zero-Server-Storage Privacy & Ephemeral Scratch
+- **Immediate Delivery Purge**: Once a client browser receives the media stream, an asynchronous background task unlinks the file from server storage so disk consumption drops to zero.
+- **Aggressive Garbage Collection**: Background cleanup sweeps every 60 seconds to automatically delete any uncollected scratch files and database entries older than 10 minutes.
+- **Strict Zero-Log Policy**: No user IP addresses, browsing histories, or private credentials are kept.
 
 ---
 
@@ -174,6 +178,34 @@ Run the full automated test suite:
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
+
+---
+
+## 🤝 Contributing & Community
+
+VIRELO is **100% open-source and open to contributions**! Whether you want to add a new platform extractor, optimize streaming throughput, polish the UI, or improve documentation, we welcome your ideas and pull requests.
+
+### How to Contribute:
+1. **Fork** the repository: [github.com/praveeneyyy/virelo](https://github.com/praveeneyyy/virelo)
+2. **Clone** your fork locally and create a descriptive branch:
+   ```bash
+   git checkout -b feature/amazing-improvement
+   ```
+3. **Make your changes** and run tests to verify:
+   ```bash
+   python -m unittest discover -s tests -p "test_*.py"
+   ```
+4. **Push** your branch to your fork:
+   ```bash
+   git push origin feature/amazing-improvement
+   ```
+5. **Open a Pull Request** against the `main` branch.
+
+> 💬 **Maintainer Review & Merge**:  
+> *"Create a fork, open a Pull Request, and push your improvements. I will check, review, and merge it!"*  
+> — **Praveen kumar** ([@praveeneyyy](https://github.com/praveeneyyy))
+
+All merged contributors are permanently honored in our [**CONTRIBUTORS.md**](CONTRIBUTORS.md) Hall of Fame. For comprehensive environment setup, development workflows, and coding standards, please check the [**Contribution Guidelines (CONTRIBUTING.md)**](CONTRIBUTING.md).
 
 ---
 

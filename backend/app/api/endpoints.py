@@ -9,10 +9,12 @@ import shutil
 import urllib.parse
 import uuid
 import time
+import threading
 from typing import List, Dict, Any, Optional
 import yt_dlp
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Query, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 
 from backend.app.core.config import settings
 from backend.app.core.security import validate_url, is_safe_path
@@ -109,11 +111,42 @@ def get_download_job(job_id: str):
     return JobStatus(**job)
 
 
+def remove_ephemeral_server_file(file_path: str, job_id: Optional[str] = None, delay_seconds: int = 10):
+    """
+    Purges temporary scratch media from the server disk after streaming finishes to the user's device.
+    Enforces zero-server-storage privacy architecture — media lives strictly in the user's device Downloads folder.
+    A short 10-second grace window allows multi-socket or segmented client browser download completions
+    before permanently unlinking the file from server storage.
+    """
+    def _delayed_purge():
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"[Ephemeral Storage] Safely purged server scratch file after client stream: {file_path}")
+        except Exception as e:
+            print(f"[Ephemeral Storage] Notice: could not remove file {file_path}: {e}")
+
+        if job_id:
+            try:
+                from backend.app.core.database import get_db
+                conn = get_db()
+                cursor = conn.cursor()
+                cursor.execute("UPDATE jobs SET file_path = NULL WHERE id = ?", (job_id,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
+    threading.Thread(target=_delayed_purge, daemon=True).start()
+
+
 @router.get("/download/{job_id}/file")
 def serve_download_file(job_id: str):
     """
     Streams downloaded/transcoded media file to client browser with Content-Disposition.
-    Automatically guards against expired files (purged after 30 minutes).
+    Automatically guards against expired files and purges server copy immediately after client receipt.
     """
     job = get_job(job_id)
     if not job:
@@ -141,7 +174,8 @@ def serve_download_file(job_id: str):
     return FileResponse(
         path=file_path,
         headers=headers,
-        media_type="application/octet-stream"
+        media_type="application/octet-stream",
+        background=BackgroundTask(remove_ephemeral_server_file, file_path, job_id, 10)
     )
 
 

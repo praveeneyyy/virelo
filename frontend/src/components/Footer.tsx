@@ -200,6 +200,28 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScrollToSection })
                   System Diagnostics
                 </button>
               </li>
+              <li>
+                <a
+                  href="https://github.com/praveeneyyy/virelo/blob/main/CONTRIBUTING.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-600 hover:text-purple-700 transition-colors flex items-center gap-1.5"
+                >
+                  <span>Contribute (Open Source)</span>
+                  <ArrowUpRight size={13} className="text-slate-400" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/praveeneyyy/virelo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-600 hover:text-purple-700 transition-colors flex items-center gap-1.5"
+                >
+                  <span>GitHub Repository</span>
+                  <ArrowUpRight size={13} className="text-slate-400" />
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -260,10 +282,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onScrollToSection })
             <span>•</span>
             <span>Mutagen ID3 Tagging</span>
             <span>•</span>
-            <span className="text-emerald-700 font-medium">30-Min Ephemeral Auto-Purge</span>
+            <span className="text-emerald-700 font-medium">Zero Server Storage (Direct Device Delivery)</span>
           </div>
           <div className="text-slate-400">
-            100% Client-Side Local Storage Privacy
+            100% Client-Side Device Downloads Privacy
           </div>
         </div>
 

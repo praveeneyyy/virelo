@@ -40,7 +40,7 @@ class Settings(BaseModel):
     AUTO_EMBED_THUMBNAIL: bool = True
     AUTO_EMBED_SUBTITLES: bool = False
     AUTO_CLEANUP_FAILED_HOURS: int = 24
-    FILE_RETENTION_MINUTES: int = 30  # Automatic purge of links, files, and DB records after 30 minutes
+    FILE_RETENTION_MINUTES: int = int(os.getenv("FILE_RETENTION_MINUTES", "10"))  # Ephemeral storage: uncollected temporary scratch purged after 10 min
     
     # CORS
     CORS_ORIGINS: list[str] = [
