@@ -453,6 +453,46 @@ def get_system_health():
     )
 
 
+@router.get("/diagnose_yt")
+def diagnose_youtube(url: str = "https://www.youtube.com/watch?v=_ju1xmmTjf8"):
+    """Internal diagnostic endpoint returning exact yt-dlp logs and exception."""
+    from backend.app.services.youtube.formats import YOUTUBE_PRIMARY_CLIENTS
+    from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
+
+    opts = {
+        'quiet': False,
+        'skip_download': True,
+        'extractor_args': {'youtube': {'player_client': YOUTUBE_PRIMARY_CLIENTS}}
+    }
+    opts = apply_runtime_ytdlp_opts(opts)
+    logs = []
+
+    class DiagnosticLogger:
+        def debug(self, msg): logs.append(f"[debug] {msg}")
+        def info(self, msg): logs.append(f"[info] {msg}")
+        def warning(self, msg): logs.append(f"[warning] {msg}")
+        def error(self, msg): logs.append(f"[error] {msg}")
+
+    opts['logger'] = DiagnosticLogger()
+
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return {
+                "success": True,
+                "title": info.get("title"),
+                "formats": len(info.get("formats", [])),
+                "logs": logs[-30:]
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "error_type": str(type(e)),
+            "error_str": str(e),
+            "logs": logs[-30:]
+        }
+
+
 # -----------------------------------------------------------------------------
 # 8. WebSocket for Real-Time Progress Stream
 # -----------------------------------------------------------------------------
