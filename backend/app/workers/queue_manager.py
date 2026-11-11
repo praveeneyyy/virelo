@@ -166,12 +166,15 @@ class QueueManager:
             media_type = job["media_type"].lower()
             target_format = job["target_format"].lower()
 
-            # 1. Inspect metadata if title/platform missing
-            info = self.extractor.extract_info(url)
-            job["title"] = info.get("title") or job.get("title") or "Untitled Media"
-            job["platform"] = info.get("platform") or job.get("platform") or "Web"
-            job["thumbnail"] = info.get("thumbnail") or job.get("thumbnail")
-            self.notify_job_update(job)
+            # 1. Inspect metadata only if title or platform is missing (and not already provided)
+            info = {}
+            if not job.get("title") or job.get("title") in ("Resolving Title...", "Untitled Media"):
+                if not youtube_service.is_youtube_url(url):
+                    info = self.extractor.extract_info(url)
+                    job["title"] = info.get("title") or "Untitled Media"
+                    job["platform"] = info.get("platform") or "Web"
+                    job["thumbnail"] = info.get("thumbnail") or job.get("thumbnail")
+                    self.notify_job_update(job)
 
             if cancel_token and cancel_token.is_set():
                 raise InterruptedError("Download cancelled.")
@@ -381,20 +384,19 @@ class QueueManager:
         else:  # Video or GIF
             is_gif = (target_fmt == "gif")
             if quality.lower() in ["best", "highest", "max", "auto"]:
-                format_spec = "bestvideo+bestaudio/best"
+                format_spec = "bestvideo[protocol^=http]+bestaudio[protocol^=http]/bestvideo+bestaudio/best"
             else:
                 h = int(re.sub(r'\D', '', quality)) if re.search(r'\d+', quality) else 1080
-                format_spec = f"bestvideo[height<={h}]+bestaudio/best[height<={h}]/bestvideo+bestaudio/best"
+                format_spec = f"bestvideo[height<={h}][protocol^=http]+bestaudio[protocol^=http]/bestvideo[height<={h}]+bestaudio/best"
 
             opts['format'] = format_spec
             merge_fmt = "mp4" if is_gif else (target_fmt if target_fmt in ["mp4", "mkv", "webm"] else "mp4")
             opts['merge_output_format'] = merge_fmt
+            opts['concurrent_fragment_downloads'] = 4
+            opts['buffersize'] = 1024 * 1024
+            opts['postprocessor_args'] = {'Merger': ['-c:v', 'copy', '-c:a', 'copy']}
             if 'youtube.com' in job.get("url", "").lower() or 'youtu.be' in job.get("url", "").lower():
                 opts.setdefault('extractor_args', {})['youtube'] = {'player_client': YOUTUBE_PRIMARY_CLIENTS}
-
-            if job.get("embed_thumbnail") and has_ffprobe and not is_gif:
-                opts['writethumbnail'] = True
-                postprocessors.append({'key': 'EmbedThumbnail'})
 
             if job.get("embed_subtitles") and ffmpeg_bin and not is_gif:
                 opts['writesubtitles'] = True

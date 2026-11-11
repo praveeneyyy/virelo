@@ -143,7 +143,7 @@ class YouTubeService:
                         pass
                     raise InterruptedError("Download cancelled by user.")
 
-                time.sleep(1.5)
+                time.sleep(0.7)
                 poll_req = urllib.request.Request(
                     f"{worker_base}/api/download/{remote_id}",
                     headers={"User-Agent": "VireloCloudCluster/1.0"}
@@ -171,7 +171,7 @@ class YouTubeService:
                     with urllib.request.urlopen(file_req, timeout=120) as f_resp:
                         with open(local_dest, "wb") as out_f:
                             while True:
-                                chunk = f_resp.read(65536)
+                                chunk = f_resp.read(262144)
                                 if not chunk:
                                     break
                                 out_f.write(chunk)

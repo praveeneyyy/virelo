@@ -123,6 +123,7 @@ class YouTubeDownloader:
             'merge_output_format': merge_fmt,
             'concurrent_fragment_downloads': 4,
             'buffersize': 1024 * 1024,
+            'postprocessor_args': {'Merger': ['-c:v', 'copy', '-c:a', 'copy']},
             'retries': 5,
             'fragment_retries': 5,
             'extractor_args': {'youtube': {'player_client': YOUTUBE_PRIMARY_CLIENTS}},
@@ -131,10 +132,6 @@ class YouTubeDownloader:
             opts['progress_hooks'] = [progress_hook]
 
         postprocessors = []
-
-        if embed_thumbnail and has_ffprobe and not is_gif:
-            opts['writethumbnail'] = True
-            postprocessors.append({'key': 'EmbedThumbnail'})
 
         if embed_subtitles and ffmpeg_bin and not is_gif:
             opts['writesubtitles'] = True
