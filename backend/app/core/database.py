@@ -138,7 +138,12 @@ def get_job(job_id: str) -> Optional[Dict[str, Any]]:
     cursor.execute("SELECT * FROM jobs WHERE id = ?", (job_id,))
     row = cursor.fetchone()
     conn.close()
-    return dict(row) if row else None
+    if not row:
+        return None
+    d = dict(row)
+    if d.get("status") == "completed" or d.get("file_path"):
+        d["download_url"] = f"/api/download/{job_id}/file"
+    return d
 
 
 def get_all_jobs() -> List[Dict[str, Any]]:
@@ -147,7 +152,13 @@ def get_all_jobs() -> List[Dict[str, Any]]:
     cursor.execute("SELECT * FROM jobs ORDER BY created_at DESC")
     rows = cursor.fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    jobs = []
+    for r in rows:
+        d = dict(r)
+        if d.get("status") == "completed" or d.get("file_path"):
+            d["download_url"] = f"/api/download/{d['id']}/file"
+        jobs.append(d)
+    return jobs
 
 
 def delete_job_db(job_id: str):

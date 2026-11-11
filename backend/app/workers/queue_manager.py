@@ -272,6 +272,7 @@ class QueueManager:
                 "file_path": final_file,
                 "file_name": f_name,
                 "file_size_str": format_bytes(f_size),
+                "download_url": f"/api/download/{job_id}/file",
                 "completed_at": time.time(),
                 "error": None
             })

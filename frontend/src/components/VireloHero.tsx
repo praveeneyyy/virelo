@@ -117,17 +117,22 @@ export const VireloHero: React.FC<HeroProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const autoDownloadedJobIdsRef = useRef<Set<string>>(new Set());
 
-  // Auto-download to user's local folder as soon as processing completes
+  // Auto-download to user's device Downloads folder as soon as processing completes
   useEffect(() => {
-    if (activeJob && activeJob.status === 'completed' && activeJob.download_url && !autoDownloadedJobIdsRef.current.has(activeJob.id)) {
+    if (activeJob && activeJob.status === 'completed' && !autoDownloadedJobIdsRef.current.has(activeJob.id)) {
       autoDownloadedJobIdsRef.current.add(activeJob.id);
       try {
+        const fileUrl = activeJob.download_url || getFileDownloadUrl(activeJob.id);
         const downloadLink = document.createElement('a');
-        downloadLink.href = getFileDownloadUrl(activeJob.id);
+        downloadLink.href = fileUrl;
         downloadLink.setAttribute('download', activeJob.file_name || 'download');
         document.body.appendChild(downloadLink);
         downloadLink.click();
-        document.body.removeChild(downloadLink);
+        setTimeout(() => {
+          try {
+            document.body.removeChild(downloadLink);
+          } catch {}
+        }, 300);
       } catch (err) {
         console.warn('Auto-download notice:', err);
       }
@@ -984,13 +989,13 @@ export const VireloHero: React.FC<HeroProps> = ({
             <span>ETA: {activeJob.eta_str || '--'}</span>
           </div>
 
-          {activeJob.status === 'completed' && activeJob.download_url && (
+          {activeJob.status === 'completed' && (
             <div className="space-y-3 pt-3 border-t border-slate-100">
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
                     <CheckCircle2 size={18} className="text-emerald-600" />
-                    <span>Download Ready — Saved to Downloads!</span>
+                    <span>Download Ready — Saving to Device Downloads!</span>
                   </div>
                   <p className="text-xs font-mono text-emerald-700 truncate max-w-md">
                     {activeJob.file_name || 'Downloaded media file'} ({activeJob.file_size_str || 'Ready'})
@@ -1011,13 +1016,13 @@ export const VireloHero: React.FC<HeroProps> = ({
                   )}
 
                   <a
-                    href={getFileDownloadUrl(activeJob.id)}
+                    href={activeJob.download_url || getFileDownloadUrl(activeJob.id)}
                     download={activeJob.file_name || 'download'}
                     className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg cursor-pointer"
-                    title="Save file directly to your Downloads folder"
+                    title="Click to save file directly into your device's Downloads folder"
                   >
                     <Download size={15} />
-                    <span>Save to Downloads</span>
+                    <span>Save to Device Downloads</span>
                   </a>
                 </div>
               </div>
