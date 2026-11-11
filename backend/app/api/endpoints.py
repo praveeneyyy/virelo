@@ -10,11 +10,12 @@ import uuid
 import time
 from typing import List, Dict, Any, Optional
 import yt_dlp
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Query, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Query, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 
 from backend.app.core.config import settings
 from backend.app.core.security import validate_url, is_safe_path
+from backend.app.core.rate_limiter import extract_limiter, download_limiter
 from backend.app.core.database import (
     get_all_jobs, get_job, delete_job_db, get_history, clear_history,
     save_setting, get_all_settings, save_job
@@ -40,10 +41,12 @@ converter = MediaConverter()
 # 1. Extraction Endpoint
 # -----------------------------------------------------------------------------
 @router.post("/extract", response_model=ExtractResponse)
-def extract_media_info(req: ExtractRequest):
+def extract_media_info(req: ExtractRequest, request: Request):
     """
     Validates URL and extracts available resolutions, formats, and metadata.
+    Enforces IP-based rate limiting to protect upstream streaming servers.
     """
+    extract_limiter.check(request)
     valid, res = validate_url(req.url)
     if not valid:
         raise HTTPException(status_code=400, detail=res)
@@ -80,10 +83,12 @@ def extract_media_info(req: ExtractRequest):
 # 2. Download Ingestion & Queue Endpoints
 # -----------------------------------------------------------------------------
 @router.post("/download", response_model=JobStatus)
-def enqueue_download(req: DownloadRequest):
+def enqueue_download(req: DownloadRequest, request: Request):
     """
     Enqueues a new media or file download job into the queue.
+    Enforces IP-based rate limiting to prevent queue flooding and worker exhaustion.
     """
+    download_limiter.check(request)
     valid, res = validate_url(req.url)
     if not valid:
         raise HTTPException(status_code=400, detail=res)
