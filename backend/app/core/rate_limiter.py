@@ -72,3 +72,4 @@ extract_limiter = IPRateLimiter(max_requests=30, window_seconds=60)
 
 # 10 download jobs enqueued per minute per IP
 download_limiter = IPRateLimiter(max_requests=10, window_seconds=60)
+
