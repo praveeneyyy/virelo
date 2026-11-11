@@ -13,7 +13,12 @@ from backend.app.utils.formatters import clean_ansi
 from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
 from backend.app.services.media_converter import MediaConverter
 from backend.app.services.youtube.url_parser import normalize_youtube_url, extract_video_id
-from backend.app.services.youtube.formats import build_video_format_spec, SUPPORTED_VIDEO_CONTAINERS
+from backend.app.services.youtube.formats import (
+    build_video_format_spec,
+    SUPPORTED_VIDEO_CONTAINERS,
+    YOUTUBE_PRIMARY_CLIENTS,
+    YOUTUBE_FALLBACK_CLIENTS,
+)
 from backend.app.services.youtube.errors import (
     YouTubeErrorCode,
     YouTubeError,
@@ -116,6 +121,7 @@ class YouTubeDownloader:
             'ignoreerrors': False,
             'format': format_spec,
             'merge_output_format': merge_fmt,
+            'extractor_args': {'youtube': {'player_client': YOUTUBE_PRIMARY_CLIENTS}},
         }
         if progress_hook:
             opts['progress_hooks'] = [progress_hook]
@@ -147,7 +153,7 @@ class YouTubeDownloader:
         prep_file = None
         last_clean_err = ""
 
-        # Attempt 1: Standard web player client
+        # Attempt 1: Modern high-fidelity TV/VisionOS player clients
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 down_info = ydl.extract_info(canonical_url, download=True)
@@ -160,7 +166,7 @@ class YouTubeDownloader:
         if cancel_token and cancel_token.is_set():
             raise InterruptedError("Download cancelled by user.")
 
-        # Attempt 2: Resilient fallback to mobile clients if cloud IP restricted
+        # Attempt 2: Resilient fallback client hierarchy
         fallback_triggers = [
             "bot", "challenge", "sign in", "po_token", "gvs",
             "403", "format is not available", "playabilitystatus"
@@ -168,8 +174,8 @@ class YouTubeDownloader:
         if not prep_file and any(t in last_clean_err.lower() for t in fallback_triggers):
             try:
                 fb_opts = dict(opts)
-                fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
-                fb_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                fb_opts['extractor_args'] = {'youtube': {'player_client': YOUTUBE_FALLBACK_CLIENTS}}
+                fb_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best'
                 with yt_dlp.YoutubeDL(fb_opts) as fb_ydl:
                     down_info = fb_ydl.extract_info(canonical_url, download=True)
                     prep_file = fb_ydl.prepare_filename(down_info)

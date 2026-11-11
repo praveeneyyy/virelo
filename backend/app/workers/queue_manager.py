@@ -25,6 +25,7 @@ from backend.app.utils.formatters import format_bytes, format_seconds, clean_ans
 from backend.app.utils.error_classifier import classify_youtube_error
 from backend.app.utils.runtime_config import apply_runtime_ytdlp_opts
 from backend.app.services.youtube import youtube_service, YouTubeError
+from backend.app.services.youtube.formats import YOUTUBE_PRIMARY_CLIENTS, YOUTUBE_FALLBACK_CLIENTS
 
 
 class ConnectionManager:
@@ -339,7 +340,7 @@ class QueueManager:
                     t in dl_clean.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
                 ):
                     fb_opts = dict(opts)
-                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
+                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': YOUTUBE_FALLBACK_CLIENTS}
                     fb_opts['format'] = 'bestaudio/best'
                     with yt_dlp.YoutubeDL(fb_opts) as fb_ydl:
                         down_info = fb_ydl.extract_info(job["url"], download=True)
@@ -366,6 +367,8 @@ class QueueManager:
             opts['format'] = format_spec
             merge_fmt = "mp4" if is_gif else (target_fmt if target_fmt in ["mp4", "mkv", "webm"] else "mp4")
             opts['merge_output_format'] = merge_fmt
+            if 'youtube.com' in job.get("url", "").lower() or 'youtu.be' in job.get("url", "").lower():
+                opts.setdefault('extractor_args', {})['youtube'] = {'player_client': YOUTUBE_PRIMARY_CLIENTS}
 
             if job.get("embed_thumbnail") and has_ffprobe and not is_gif:
                 opts['writethumbnail'] = True
@@ -396,8 +399,8 @@ class QueueManager:
                     t in dl_clean.lower() for t in ["bot", "challenge", "sign in", "po_token", "gvs", "403", "format is not available"]
                 ):
                     fb_opts = dict(opts)
-                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': ['android', 'mweb']}
-                    fb_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                    fb_opts.setdefault('extractor_args', {})['youtube'] = {'player_client': YOUTUBE_FALLBACK_CLIENTS}
+                    fb_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best'
                     with yt_dlp.YoutubeDL(fb_opts) as fb_ydl:
                         down_info = fb_ydl.extract_info(job["url"], download=True)
                         prep_file = fb_ydl.prepare_filename(down_info)

@@ -16,6 +16,7 @@ from backend.app.services.youtube.errors import (
     classify_youtube_error,
 )
 from backend.app.services.youtube.metadata import format_youtube_metadata
+from backend.app.services.youtube.formats import YOUTUBE_PRIMARY_CLIENTS, YOUTUBE_FALLBACK_CLIENTS
 from backend.app.services.youtube.circuit_breaker import circuit_breaker
 
 
@@ -27,6 +28,7 @@ class YouTubeExtractor:
 
     def _build_ytdlp_opts(self, player_clients: Optional[list] = None) -> Dict[str, Any]:
         """Constructs safe yt-dlp extraction options."""
+        clients = player_clients or YOUTUBE_PRIMARY_CLIENTS
         opts: Dict[str, Any] = {
             'quiet': True,
             'no_warnings': True,
@@ -37,17 +39,15 @@ class YouTubeExtractor:
             'ignoreerrors': False,
             'http_headers': {
                 'Accept-Language': 'en-US,en;q=0.9',
-            }
+            },
+            'extractor_args': {'youtube': {'player_client': clients}}
         }
-        if player_clients:
-            opts['extractor_args'] = {'youtube': {'player_client': player_clients}}
-
         return apply_runtime_ytdlp_opts(opts)
 
     def extract_info(self, url: str) -> Dict[str, Any]:
         """
         Extracts comprehensive metadata, available resolutions, formats, and subtitles for YouTube media.
-        Implements primary desktop extraction and resilient android/mweb fallback.
+        Prioritizes TV/VisionOS endpoints to avoid datacenter IP BotGuard challenges and SABR restrictions.
         """
         canonical_url = normalize_youtube_url(url)
         video_id = extract_video_id(canonical_url)
@@ -61,8 +61,8 @@ class YouTubeExtractor:
                 raw_error="Circuit breaker triggered"
             )
 
-        # 2. Primary extraction attempt (web client for up to 4K/8K resolution)
-        primary_opts = self._build_ytdlp_opts()
+        # 2. Primary extraction attempt (tv_samsung + visionos for datacenter-resilient 4K/1080p extraction)
+        primary_opts = self._build_ytdlp_opts(player_clients=YOUTUBE_PRIMARY_CLIENTS)
         last_clean_err = ""
 
         try:
@@ -74,15 +74,14 @@ class YouTubeExtractor:
         except Exception as exc:
             last_clean_err = clean_ansi(str(exc))
 
-        # 3. Resilient fallback attempt (android + mweb client for cloud IP bypass)
-        # Often mobile clients bypass web BotGuard requirements on cloud hosting IPs
+        # 3. Resilient fallback attempt (visionos + tv_samsung secondary profile)
         fallback_triggers = [
             "bot", "challenge", "sign in", "po_token", "gvs",
             "403", "format is not available", "playabilitystatus"
         ]
         if any(t in last_clean_err.lower() for t in fallback_triggers):
             try:
-                fallback_opts = self._build_ytdlp_opts(player_clients=['android', 'mweb'])
+                fallback_opts = self._build_ytdlp_opts(player_clients=YOUTUBE_FALLBACK_CLIENTS)
                 with yt_dlp.YoutubeDL(fallback_opts) as fb_ydl:
                     fb_info = fb_ydl.extract_info(canonical_url, download=False)
                     if fb_info:

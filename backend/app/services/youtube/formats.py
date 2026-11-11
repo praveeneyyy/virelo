@@ -12,6 +12,13 @@ STANDARD_VIDEO_QUALITIES = [4320, 2160, 1440, 1080, 720, 480, 360, 240, 144]
 SUPPORTED_VIDEO_CONTAINERS = ["mp4", "mkv", "webm"]
 SUPPORTED_AUDIO_CODECS = ["mp3", "m4a", "flac", "wav", "opus", "ogg", "aac"]
 
+# Modern client hierarchies: TV (tv_samsung) and VisionOS (visionos) InnerTube endpoints
+# bypass desktop web BotGuard challenges and android SABR stream stripping, delivering
+# unthrottled 4K/1080p stream discovery without requiring browser PO tokens.
+YOUTUBE_PRIMARY_CLIENTS = ['tv_samsung', 'visionos', 'android', 'web']
+YOUTUBE_FALLBACK_CLIENTS = ['visionos', 'tv_samsung', 'mweb', 'android']
+
+
 
 def parse_and_sort_formats(raw_formats: List[Dict[str, Any]], duration_seconds: Optional[int] = None) -> List[Dict[str, Any]]:
     """

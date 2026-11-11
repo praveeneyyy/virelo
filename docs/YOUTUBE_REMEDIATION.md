@@ -63,3 +63,4 @@ All misleading banners demanding browser `cookies.txt` uploads have been removed
 12. `YOUTUBE_CHALLENGE_REQUIRED`
 13. `YOUTUBE_DOWNLOAD_FAILED`
 14. `YOUTUBE_AUTHENTICATION_REQUIRED`
+
